@@ -201,7 +201,7 @@ export default function ChatBox({
                     mine ? "text-brand-100" : "text-slate-400"
                   }`}
                 >
-                  <span>{new Date(m.createdAt).toLocaleString("tg-TJ")}</span>
+                  <span suppressHydrationWarning>{new Date(m.createdAt).toLocaleString("tg-TJ")}</span>
                   {mine && (
                     <span>{m.readAt ? "Хонда шуд" : "Расонида шуд"}</span>
                   )}

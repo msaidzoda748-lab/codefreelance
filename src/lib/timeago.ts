@@ -7,5 +7,5 @@ export function timeAgoT(d: Date | string, t: Dict) {
   return `${Math.floor(s / 86400)} ${t.time.day}`;
 }
 export function somoniT(n: number) {
-  return `${n.toLocaleString("ru-RU").replace(/,/g, " ")} сомонӣ`;
+  return `${String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g, "\u00a0")} сомонӣ`; // deterministic (no locale diff between server & browser)
 }
