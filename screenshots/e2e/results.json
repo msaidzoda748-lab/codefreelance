@@ -1,0 +1,132 @@
+{
+  "base": "http://localhost:3000",
+  "run": "mv6zxtqe",
+  "results": [
+    {
+      "name": "register client via UI",
+      "ok": true,
+      "ms": 2269
+    },
+    {
+      "name": "register 3 freelancers + stranger",
+      "ok": true,
+      "ms": 4286
+    },
+    {
+      "name": "validation: project form shows field errors (frontend)",
+      "ok": true,
+      "ms": 2141
+    },
+    {
+      "name": "backend validation rejects bad project",
+      "ok": true,
+      "ms": 59
+    },
+    {
+      "name": "client saves a draft, then publishes via UI",
+      "ok": true,
+      "ms": 4205
+    },
+    {
+      "name": "freelancer 1 sends a proposal via UI modal",
+      "ok": true,
+      "ms": 1899
+    },
+    {
+      "name": "freelancers 2 and 3 propose (API); duplicate proposal rejected",
+      "ok": true,
+      "ms": 639
+    },
+    {
+      "name": "freelancer edits then withdraws and re-sends own proposal",
+      "ok": true,
+      "ms": 2789
+    },
+    {
+      "name": "privacy: proposal contents visible only to project owner",
+      "ok": true,
+      "ms": 2219
+    },
+    {
+      "name": "compare 3 proposals and hire from the compare page",
+      "ok": true,
+      "ms": 7386
+    },
+    {
+      "name": "double hire does not create a second order",
+      "ok": true,
+      "ms": 1399
+    },
+    {
+      "name": "hired freelancer sees order; others get 404 on order page",
+      "ok": true,
+      "ms": 3750
+    },
+    {
+      "name": "no review before completion",
+      "ok": true,
+      "ms": 1057
+    },
+    {
+      "name": "freelancer cannot complete/accept own work",
+      "ok": true,
+      "ms": 1284
+    },
+    {
+      "name": "freelancer starts order; client adds a milestone",
+      "ok": true,
+      "ms": 4802
+    },
+    {
+      "name": "chat: messages, attachment privacy, retry dedupe",
+      "ok": true,
+      "ms": 12469
+    },
+    {
+      "name": "submit work → revision → resubmit → accept all → COMPLETED",
+      "ok": true,
+      "ms": 12419
+    },
+    {
+      "name": "both parties leave one review each; duplicates and self-review rejected",
+      "ok": true,
+      "ms": 4422
+    },
+    {
+      "name": "search, filters, sort and pagination",
+      "ok": true,
+      "ms": 1286
+    },
+    {
+      "name": "notifications: badge + center",
+      "ok": true,
+      "ms": 571
+    },
+    {
+      "name": "admin: restricted user cannot log in; audit log written",
+      "ok": true,
+      "ms": 4213
+    },
+    {
+      "name": "rate limit: login is throttled",
+      "ok": true,
+      "ms": 683
+    },
+    {
+      "name": "password reset: token flow (dev log fallback) ",
+      "ok": true,
+      "ms": 1704
+    },
+    {
+      "name": "responsive: no horizontal overflow at 360/390/768/1440",
+      "ok": true,
+      "ms": 30285
+    },
+    {
+      "name": "no console errors during the run",
+      "ok": true,
+      "ms": 0
+    }
+  ],
+  "consoleErrors": []
+}

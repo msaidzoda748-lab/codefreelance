@@ -30,5 +30,7 @@ export function rateLimit(name: LimitName, key: string, now = Date.now()) {
 }
 export function resetRateLimits() { store.clear(); }
 export function clientIp(req: Request) {
-  return (req.headers.get("x-forwarded-for") || "").split(",")[0].trim() || req.headers.get("x-real-ip") || "local";
+  // Rightmost entry is the one appended by our proxy (Render); leftmost values are client-controlled.
+  const xff = (req.headers.get("x-forwarded-for") || "").split(",").map((s) => s.trim()).filter(Boolean);
+  return xff.at(-1) || req.headers.get("x-real-ip") || "local";
 }

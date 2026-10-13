@@ -4,6 +4,7 @@ import { ArrowLeft, Briefcase } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
 import { getDict, getLang } from "@/i18n/server";
+import { fmt } from "@/i18n/format";
 import ChatBox from "@/components/ChatBox";
 import Avatar from "@/components/Avatar";
 import ConvList, { loadConversations } from "../ConvList";
@@ -27,7 +28,7 @@ export default async function ConversationPage({ params }: { params: { id: strin
           <div className="flex flex-wrap items-center gap-3">
             <Link href="/messages" className="flex h-11 w-11 items-center justify-center rounded-xl hover:bg-slate-100 lg:hidden" aria-label={t.common.back}><ArrowLeft className="h-5 w-5" /></Link>
             {other && <Link href={`/freelancers/${other.id}`} className="flex items-center gap-2 no-underline"><Avatar name={other.name} src={other.avatarUrl} size="sm" /><span className="font-bold text-ink">{other.name}</span></Link>}
-            {conv.project && <span className="truncate text-sm text-ink-muted">· {t.chat.about}: <Link href={`/projects/${conv.project.id}`}>{conv.project.title}</Link></span>}
+            {conv.project && <span className="truncate text-sm text-ink-muted">· <Link href={`/projects/${conv.project.id}`}>{fmt(t.chat.about, { title: conv.project.title })}</Link></span>}
             {conv.orderId && <Link href={`/orders/${conv.orderId}`} className="btn-secondary ml-auto !min-h-[40px] no-underline"><Briefcase className="h-4 w-4" aria-hidden />{t.chat.openOrder}</Link>}
           </div>
           <ChatBox conversationId={conv.id} me={{ id: user.id, name: user.name, avatarUrl: user.avatarUrl }} other={other} />

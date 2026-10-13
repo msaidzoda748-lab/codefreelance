@@ -76,7 +76,7 @@ export default function ProposalModal({ open, onClose, project, existing }: { op
             </fieldset>)}
           <div><span className="label">{t.prop.files}</span><FileUploader kind="proposals" files={files} onChange={setFiles} /></div>
           {serverError && <FormMessage>{serverError}</FormMessage>}
-          <button className="btn-primary w-full" disabled={loading}><Send className="h-4 w-4" aria-hidden />{loading ? t.common.sending : existing ? t.prop.update : t.prop.send}</button>
+          <button type="submit" className="btn-primary w-full" disabled={loading}><Send className="h-4 w-4" aria-hidden />{loading ? t.common.sending : existing ? t.prop.update : t.prop.send}</button>
           <p className="text-center text-xs text-ink-muted">{t.common.noPayments}</p>
         </form>
       )}

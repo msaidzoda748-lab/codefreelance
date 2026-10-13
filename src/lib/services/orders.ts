@@ -91,7 +91,7 @@ export async function milestoneAction(userId: string, milestoneId: string, actio
   if (!ms) throw new ApiError("not_found", 404);
   const role = roleInOrder({ id: userId }, ms.order);
   if (!role) throw new ApiError("not_participant", 403);
-  const comment = (input.comment ?? input.message ?? "").trim();
+  const comment = (input.comment || input.message || "").trim();
   if (action === "submit" && comment.length < 5 && !(input.attachmentIds?.length)) throw new ApiError("invalid", 400, { fields: { message: "min5" } });
   const tr = milestoneTransition(action, role, ms.status as MilestoneStatus, ms.order.status as OrderStatus, action === "requestRevision" ? comment : "ok-comment");
   if (!tr.ok) throw new ApiError(tr.code, tr.code === "forbidden" ? 403 : tr.code === "invalid" ? 400 : 409, tr.code === "invalid" ? { fields: { comment: "min5" } } : {});
