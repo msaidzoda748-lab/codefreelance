@@ -1,105 +1,32 @@
-import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { getCurrentUser } from "@/lib/auth";
+import { ApiError, handle, int, limit, ok, readJson, requireUser, str } from "@/lib/api";
 import { notifyUser } from "@/lib/notifications";
-import { ALLOWED_CHAT, MAX_FILE_SIZE, saveUpload } from "@/lib/uploads";
+import { validateProposal } from "@/lib/validation";
 
-export async function POST(req: Request) {
-  const user = await getCurrentUser();
-  if (!user || user.role !== "FREELANCER") {
-    return NextResponse.json({ error: "Танҳо фрилансерҳо" }, { status: 403 });
+/** Send a proposal. One active proposal per freelancer per project; a withdrawn one can be re-sent. */
+export const POST = handle(async (req: Request) => {
+  const user = await requireUser({ role: "FREELANCER" });
+  limit("proposal", user.id);
+  const b = await readJson(req);
+  const input = { projectId: str(b.projectId, 50), coverLetter: str(b.coverLetter, 5000), price: int(b.price), deliveryDays: int(b.deliveryDays) };
+  const errors = validateProposal(input);
+  if (Object.keys(errors).length) throw new ApiError("invalid", 400, { fields: errors });
+  const project = await prisma.project.findUnique({ where: { id: input.projectId } });
+  if (!project || project.hidden) throw new ApiError("not_found", 404);
+  if (project.clientId === user.id) throw new ApiError("self_action");
+  if (project.status !== "OPEN" || (project.proposalDeadline && project.proposalDeadline < new Date(new Date().toDateString()))) throw new ApiError("not_open");
+  const existing = await prisma.proposal.findUnique({ where: { projectId_freelancerId: { projectId: project.id, freelancerId: user.id } } });
+  if (existing && existing.status !== "WITHDRAWN") throw new ApiError("already_proposed");
+  const myItems = Array.isArray(b.portfolioItemIds) && user.profile
+    ? (await prisma.portfolioItem.findMany({ where: { id: { in: b.portfolioItemIds.map(String) }, profileId: user.profile.id }, select: { id: true } })).map((x) => ({ id: x.id }))
+    : [];
+  const data = { coverLetter: input.coverLetter, price: input.price, deliveryDays: input.deliveryDays, status: "SENT", portfolioItems: { set: myItems } };
+  const proposal = existing
+    ? await prisma.proposal.update({ where: { id: existing.id }, data })
+    : await prisma.proposal.create({ data: { ...data, portfolioItems: { connect: myItems }, projectId: project.id, freelancerId: user.id } });
+  if (Array.isArray(b.attachmentIds)) {
+    await prisma.attachment.updateMany({ where: { id: { in: b.attachmentIds.map(String) }, uploaderId: user.id, projectId: null, messageId: null, proposalId: null, submissionId: null }, data: { proposalId: proposal.id, visibility: "PRIVATE" } });
   }
-  try {
-    const contentType = req.headers.get("content-type") || "";
-    let projectId = "";
-    let coverLetter = "";
-    let price = 0;
-    let deliveryDays = 0;
-    let file: File | null = null;
-
-    if (contentType.includes("multipart/form-data")) {
-      const form = await req.formData();
-      projectId = String(form.get("projectId") || "");
-      coverLetter = String(form.get("coverLetter") || "").trim();
-      price = Number(form.get("price"));
-      deliveryDays = Number(form.get("deliveryDays"));
-      const f = form.get("file");
-      if (f instanceof File && f.size > 0) file = f;
-    } else {
-      const body = await req.json();
-      projectId = String(body.projectId || "");
-      coverLetter = String(body.coverLetter || "").trim();
-      price = Number(body.price);
-      deliveryDays = Number(body.deliveryDays);
-    }
-
-    if (!projectId || !coverLetter || !price || !deliveryDays) {
-      return NextResponse.json({ error: "Маълумотро пур кунед" }, { status: 400 });
-    }
-
-    const project = await prisma.project.findUnique({ where: { id: projectId } });
-    if (!project || project.status !== "OPEN") {
-      return NextResponse.json(
-        { error: "Лоиҳа барои пешниҳод кушода нест" },
-        { status: 400 }
-      );
-    }
-
-    const existing = await prisma.proposal.findUnique({
-      where: {
-        projectId_freelancerId: { projectId, freelancerId: user.id },
-      },
-    });
-    if (existing) {
-      return NextResponse.json(
-        { error: "Шумо аллакай пешниҳод додаед" },
-        { status: 400 }
-      );
-    }
-
-    let saved = null as Awaited<ReturnType<typeof saveUpload>> | null;
-    if (file) {
-      saved = await saveUpload(file, "proposals", {
-        maxSize: MAX_FILE_SIZE,
-        allowed: ALLOWED_CHAT,
-      });
-    }
-
-    const proposal = await prisma.proposal.create({
-      data: {
-        projectId,
-        freelancerId: user.id,
-        coverLetter,
-        price,
-        deliveryDays,
-        ...(saved
-          ? {
-              attachments: {
-                create: {
-                  uploaderId: user.id,
-                  url: saved.url,
-                  name: saved.name,
-                  mimeType: saved.mimeType,
-                  size: saved.size,
-                },
-              },
-            }
-          : {}),
-      },
-    });
-
-    await notifyUser({
-      userId: project.clientId,
-      type: "NEW_PROPOSAL",
-      title: "Пешниҳоди нав",
-      body: `${user.name} ба лоиҳаи «${project.title}» пешниҳод дод`,
-      link: `/projects/${projectId}`,
-    });
-
-    return NextResponse.json({ ok: true, id: proposal.id });
-  } catch (e) {
-    console.error(e);
-    const msg = e instanceof Error ? e.message : "Хатои сервер";
-    return NextResponse.json({ error: msg }, { status: 500 });
-  }
-}
+  await notifyUser({ userId: project.clientId, type: "NEW_PROPOSAL", params: { name: user.name, project: project.title }, link: `/projects/${project.id}` });
+  return ok({ id: proposal.id }, 201);
+});

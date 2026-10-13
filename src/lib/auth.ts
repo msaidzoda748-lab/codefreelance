@@ -56,10 +56,12 @@ export async function getCurrentUser() {
   return session.user;
 }
 
-export function avgRating(reviews: { rating: number }[]) {
-  if (!reviews.length) return null;
-  const sum = reviews.reduce((a, r) => a + r.rating, 0);
-  return Math.round((sum / reviews.length) * 10) / 10;
+/** Average of published (non-hidden) reviews. */
+export function avgRating(reviews: { rating: number; hidden?: boolean }[]) {
+  const v = reviews.filter((r) => !r.hidden);
+  if (!v.length) return null;
+  const sum = v.reduce((a, r) => a + r.rating, 0);
+  return Math.round((sum / v.length) * 10) / 10;
 }
 
 export function appUrl() {

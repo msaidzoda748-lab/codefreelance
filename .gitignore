@@ -43,3 +43,6 @@ Thumbs.db
 coverage/
 .turbo/
 *.tsbuildinfo
+
+# private uploads
+/storage/

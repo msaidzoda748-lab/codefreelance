@@ -1,85 +1,29 @@
-import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { getCurrentUser } from "@/lib/auth";
-import { ALLOWED_CHAT, MAX_FILE_SIZE, saveUpload } from "@/lib/uploads";
+import { handle, ok, readJson, requireUser } from "@/lib/api";
+import { parseProjectInput } from "@/lib/projectInput";
+import { searchProjects, setProjectSkills } from "@/lib/queries/projects";
 
-export async function POST(req: Request) {
-  const user = await getCurrentUser();
-  if (!user || user.role !== "CLIENT") {
-    return NextResponse.json({ error: "Танҳо мизоҷон" }, { status: 403 });
+const COVERS: Record<string, string> = { web: "website", mobile: "mobile", dev: "dashboard", bots: "dashboard", design: "logo", marketing: "translate", translate: "translate" };
+
+export const GET = handle(async (req: Request) => {
+  const sp = Object.fromEntries(new URL(req.url).searchParams.entries());
+  const r = await searchProjects(sp);
+  return ok({ ...r, items: r.items.map((p) => ({ id: p.id, title: p.title, description: p.description, category: p.category, categorySlug: p.categoryRel?.slug, skills: p.skills, budget: p.budget, budgetMin: p.budgetMin, budgetMax: p.budgetMax, deadline: p.deadline, language: p.language, city: p.city, coverUrl: p.coverUrl, createdAt: p.createdAt, status: p.status, proposals: p._count.proposals })) });
+});
+
+/** Create a project. `publish: false` saves a draft (not visible publicly). */
+export const POST = handle(async (req: Request) => {
+  const user = await requireUser({ role: "CLIENT" });
+  const b = await readJson(req);
+  const { data, skills } = await parseProjectInput(b);
+  const publish = b.publish !== false;
+  const cat = await prisma.category.findUnique({ where: { id: data.categoryId } });
+  const project = await prisma.project.create({
+    data: { ...data, clientId: user.id, skills: "", status: publish ? "OPEN" : "DRAFT", publishedAt: publish ? new Date() : null, city: data.city ?? user.city, coverUrl: `/img/covers/${COVERS[cat?.slug || ""] || "website"}.svg` },
+  });
+  await setProjectSkills(project.id, skills);
+  if (Array.isArray(b.attachmentIds)) {
+    await prisma.attachment.updateMany({ where: { id: { in: b.attachmentIds.map(String) }, uploaderId: user.id, projectId: null, messageId: null, proposalId: null, submissionId: null }, data: { projectId: project.id, visibility: "PUBLIC" } });
   }
-  try {
-    const contentType = req.headers.get("content-type") || "";
-    let title = "";
-    let description = "";
-    let category = "";
-    let skills = "";
-    let budget = 0;
-    let deadlineStr = "";
-    let file: File | null = null;
-
-    if (contentType.includes("multipart/form-data")) {
-      const form = await req.formData();
-      title = String(form.get("title") || "").trim();
-      description = String(form.get("description") || "").trim();
-      category = String(form.get("category") || "").trim();
-      skills = String(form.get("skills") || "").trim();
-      budget = Number(form.get("budget"));
-      deadlineStr = String(form.get("deadline") || "");
-      const f = form.get("file");
-      if (f instanceof File && f.size > 0) file = f;
-    } else {
-      const body = await req.json();
-      title = String(body.title || "").trim();
-      description = String(body.description || "").trim();
-      category = String(body.category || "").trim();
-      skills = String(body.skills || "").trim();
-      budget = Number(body.budget);
-      deadlineStr = String(body.deadline || "");
-    }
-
-    const deadline = new Date(deadlineStr);
-    if (!title || !description || !category || !budget || isNaN(deadline.getTime())) {
-      return NextResponse.json({ error: "Маълумотро пур кунед" }, { status: 400 });
-    }
-
-    let saved = null as Awaited<ReturnType<typeof saveUpload>> | null;
-    if (file) {
-      saved = await saveUpload(file, "projects", {
-        maxSize: MAX_FILE_SIZE,
-        allowed: ALLOWED_CHAT,
-      });
-    }
-
-    const project = await prisma.project.create({
-      data: {
-        clientId: user.id,
-        title,
-        description,
-        category,
-        skills,
-        budget,
-        deadline,
-        status: "OPEN",
-        ...(saved
-          ? {
-              attachments: {
-                create: {
-                  uploaderId: user.id,
-                  url: saved.url,
-                  name: saved.name,
-                  mimeType: saved.mimeType,
-                  size: saved.size,
-                },
-              },
-            }
-          : {}),
-      },
-    });
-    return NextResponse.json({ ok: true, id: project.id });
-  } catch (e) {
-    console.error(e);
-    const msg = e instanceof Error ? e.message : "Хатои сервер";
-    return NextResponse.json({ error: msg }, { status: 500 });
-  }
-}
+  return ok({ id: project.id, status: project.status }, 201);
+});

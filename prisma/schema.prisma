@@ -8,34 +8,42 @@ datasource db {
 }
 
 model User {
-  id           String   @id @default(cuid())
-  email        String   @unique
-  passwordHash String
-  name         String
-  role         String
-  avatarUrl    String?
-  city         String   @default("Душанбе")
+  id               String   @id @default(cuid())
+  email            String   @unique
+  passwordHash     String
+  name             String
+  role             String
+  avatarUrl        String?
+  city             String   @default("Душанбе")
   /// Active role used by the UI: CLIENT | FREELANCER. A user may hold both profiles and switch.
-  isAdmin      Boolean  @default(false)
+  isAdmin          Boolean  @default(false)
   /// ACTIVE | RESTRICTED
-  status       String   @default("ACTIVE")
+  status           String   @default("ACTIVE")
   restrictedReason String?
-  uiLanguage   String   @default("tj")
-  isDemo       Boolean  @default(false)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  uiLanguage       String   @default("tj")
+  isDemo           Boolean  @default(false)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
 
-  profile        FreelancerProfile?
-  clientProfile  ClientProfile?
-  resetTokens    PasswordResetToken[]
-  projects       Project[]          @relation("ClientProjects")
-  proposals      Proposal[]
-  sentMessages   Message[]          @relation("SentMessages")
-  reviewsGiven   Review[]           @relation("ReviewsGiven")
-  reviewsRecv    Review[]           @relation("ReviewsReceived")
-  sessions       Session[]
-  notifications  Notification[]
-  attachments    Attachment[]
+  profile          FreelancerProfile?
+  clientProfile    ClientProfile?
+  resetTokens      PasswordResetToken[]
+  savedProjects    SavedProject[]
+  clientOrders     Order[]              @relation("ClientOrders")
+  freelancerOrders Order[]              @relation("FreelancerOrders")
+  submissions      Submission[]
+  milestoneEvents  MilestoneEvent[]
+  memberships      ConversationMember[]
+  reports          Report[]             @relation("Reporter")
+  auditLogs        AuditLog[]
+  projects         Project[]            @relation("ClientProjects")
+  proposals        Proposal[]
+  sentMessages     Message[]            @relation("SentMessages")
+  reviewsGiven     Review[]             @relation("ReviewsGiven")
+  reviewsRecv      Review[]             @relation("ReviewsReceived")
+  sessions         Session[]
+  notifications    Notification[]
+  attachments      Attachment[]
 }
 
 model ClientProfile {
@@ -72,40 +80,192 @@ model Session {
 }
 
 model FreelancerProfile {
-  id         String   @id @default(cuid())
-  userId     String   @unique
-  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  title      String
-  bio        String
-  skills     String
-  hourlyRate Int
-  experienceYears Int @default(1)
-  portfolio  String
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  id              String   @id @default(cuid())
+  userId          String   @unique
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title           String
+  bio             String
+  skills          String
+  hourlyRate      Int
+  experienceYears Int      @default(1)
+  /// legacy free-text portfolio links (migrated to PortfolioItem)
+  portfolio       String
+  coverUrl        String?
+  languages       String   @default("Тоҷикӣ,Русӣ")
+  rateMin         Int?
+  rateMax         Int?
+  available       Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  skillsRel      Skill[]         @relation("FreelancerSkills")
+  portfolioItems PortfolioItem[]
+}
+
+model PortfolioItem {
+  id          String            @id @default(cuid())
+  profileId   String
+  profile     FreelancerProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  title       String
+  description String            @default("")
+  /// newline-separated image URLs
+  images      String            @default("")
+  tech        String            @default("")
+  link        String?
+  createdAt   DateTime          @default(now())
+
+  proposals Proposal[] @relation("ProposalPortfolio")
+
+  @@index([profileId])
+}
+
+model Category {
+  id        String    @id @default(cuid())
+  slug      String    @unique
+  nameTj    String
+  nameRu    String
+  nameEn    String
+  active    Boolean   @default(true)
+  sort      Int       @default(0)
+  createdAt DateTime  @default(now())
+  projects  Project[]
+}
+
+model Skill {
+  id          String              @id @default(cuid())
+  name        String              @unique
+  projects    Project[]           @relation("ProjectSkills")
+  freelancers FreelancerProfile[] @relation("FreelancerSkills")
 }
 
 model Project {
-  id                 String   @id @default(cuid())
+  id                 String    @id @default(cuid())
   clientId           String
-  client             User     @relation("ClientProjects", fields: [clientId], references: [id], onDelete: Cascade)
+  client             User      @relation("ClientProjects", fields: [clientId], references: [id], onDelete: Cascade)
   title              String
   description        String
   category           String
   skills             String
   budget             Int
   deadline           DateTime
-  status             String   @default("OPEN")
+  status             String    @default("OPEN")
   acceptedProposalId String?
   coverUrl           String?
-  city               String   @default("Душанбе")
-  createdAt          DateTime @default(now())
-  updatedAt          DateTime @updatedAt
+  city               String    @default("Душанбе")
+  categoryId         String?
+  categoryRel        Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  budgetMin          Int?
+  budgetMax          Int?
+  proposalDeadline   DateTime?
+  /// communication language: tj | ru | en
+  language           String    @default("tj")
+  hidden             Boolean   @default(false)
+  publishedAt        DateTime?
+  closedAt           DateTime?
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
 
-  proposals   Proposal[]
-  messages    Message[]
-  reviews     Review[]
+  skillsRel     Skill[]        @relation("ProjectSkills")
+  saved         SavedProject[]
+  order         Order?
+  conversations Conversation[]
+  proposals     Proposal[]
+  messages      Message[]
+  reviews       Review[]
+  attachments   Attachment[]
+
+  @@index([status, createdAt])
+  @@index([clientId])
+  @@index([categoryId])
+}
+
+model SavedProject {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  projectId String
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([userId, projectId])
+}
+
+model Order {
+  id           String    @id @default(cuid())
+  projectId    String    @unique
+  project      Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  proposalId   String    @unique
+  proposal     Proposal  @relation(fields: [proposalId], references: [id], onDelete: Cascade)
+  clientId     String
+  client       User      @relation("ClientOrders", fields: [clientId], references: [id], onDelete: Cascade)
+  freelancerId String
+  freelancer   User      @relation("FreelancerOrders", fields: [freelancerId], references: [id], onDelete: Cascade)
+  price        Int
+  /// NEGOTIATION | IN_PROGRESS | IN_REVIEW | REVISION_REQUESTED | COMPLETED | CANCELLED
+  status       String    @default("IN_PROGRESS")
+  deadline     DateTime
+  completedAt  DateTime?
+  cancelledAt  DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @default(now()) @updatedAt
+
+  milestones   Milestone[]
+  conversation Conversation?
+  reviews      Review[]
+
+  @@index([clientId, status])
+  @@index([freelancerId, status])
+}
+
+model Milestone {
+  id                 String    @id @default(cuid())
+  orderId            String
+  order              Order     @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  title              String
+  description        String    @default("")
+  amount             Int?
+  deadline           DateTime
+  /// PENDING | IN_PROGRESS | SUBMITTED | REVISION_REQUESTED | ACCEPTED | CANCELLED
+  status             String    @default("PENDING")
+  position           Int       @default(0)
+  deadlineNotifiedAt DateTime?
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @default(now()) @updatedAt
+
+  submissions Submission[]
+  events      MilestoneEvent[]
+
+  @@index([orderId])
+  @@index([status, deadline])
+}
+
+model Submission {
+  id          String       @id @default(cuid())
+  milestoneId String
+  milestone   Milestone    @relation(fields: [milestoneId], references: [id], onDelete: Cascade)
+  authorId    String
+  author      User         @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  message     String
+  createdAt   DateTime     @default(now())
   attachments Attachment[]
+
+  @@index([milestoneId])
+}
+
+/// Change history for milestones (status transitions, comments).
+model MilestoneEvent {
+  id          String    @id @default(cuid())
+  milestoneId String
+  milestone   Milestone @relation(fields: [milestoneId], references: [id], onDelete: Cascade)
+  actorId     String
+  actor       User      @relation(fields: [actorId], references: [id], onDelete: Cascade)
+  action      String
+  fromStatus  String?
+  toStatus    String?
+  comment     String    @default("")
+  createdAt   DateTime  @default(now())
+
+  @@index([milestoneId])
 }
 
 model Proposal {
@@ -117,57 +277,109 @@ model Proposal {
   coverLetter  String
   price        Int
   deliveryDays Int
-  status       String   @default("PENDING")
+  /// SENT | ACCEPTED | REJECTED | WITHDRAWN
+  status       String   @default("SENT")
   createdAt    DateTime @default(now())
+  updatedAt    DateTime @default(now()) @updatedAt
 
-  attachments Attachment[]
+  attachments    Attachment[]
+  portfolioItems PortfolioItem[] @relation("ProposalPortfolio")
+  order          Order?
 
   @@unique([projectId, freelancerId])
+  @@index([freelancerId, status])
+}
+
+model Conversation {
+  id            String               @id @default(cuid())
+  projectId     String?
+  project       Project?             @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  orderId       String?              @unique
+  order         Order?               @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  lastMessageAt DateTime             @default(now())
+  createdAt     DateTime             @default(now())
+  members       ConversationMember[]
+  messages      Message[]
+
+  @@index([projectId])
+}
+
+model ConversationMember {
+  id             String       @id @default(cuid())
+  conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  userId         String
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lastReadAt     DateTime?
+  createdAt      DateTime     @default(now())
+
+  @@unique([conversationId, userId])
+  @@index([userId])
 }
 
 model Message {
-  id         String    @id @default(cuid())
-  projectId  String
-  project    Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  senderId   String
-  sender     User      @relation("SentMessages", fields: [senderId], references: [id], onDelete: Cascade)
-  body       String    @default("")
-  readAt     DateTime?
-  createdAt  DateTime  @default(now())
+  id              String        @id @default(cuid())
+  /// legacy link to project (kept for history)
+  projectId       String?
+  project         Project?      @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  conversationId  String?
+  conversation    Conversation? @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  senderId        String
+  sender          User          @relation("SentMessages", fields: [senderId], references: [id], onDelete: Cascade)
+  body            String        @default("")
+  /// client-generated id for idempotent resend after network failures
+  clientMessageId String?
+  readAt          DateTime?
+  hidden          Boolean       @default(false)
+  createdAt       DateTime      @default(now())
 
   attachments Attachment[]
+
+  @@unique([senderId, clientMessageId])
+  @@index([conversationId, createdAt])
 }
 
 model Review {
   id         String   @id @default(cuid())
   projectId  String
   project    Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  orderId    String?
+  order      Order?   @relation(fields: [orderId], references: [id], onDelete: Cascade)
   fromUserId String
   fromUser   User     @relation("ReviewsGiven", fields: [fromUserId], references: [id], onDelete: Cascade)
   toUserId   String
   toUser     User     @relation("ReviewsReceived", fields: [toUserId], references: [id], onDelete: Cascade)
   rating     Int
   comment    String
+  /// hidden by moderation → excluded from averages and public lists
+  hidden     Boolean  @default(false)
   createdAt  DateTime @default(now())
 
   @@unique([projectId, fromUserId])
+  @@unique([orderId, fromUserId])
+  @@index([toUserId, hidden])
 }
 
 model Attachment {
-  id           String   @id @default(cuid())
+  id           String      @id @default(cuid())
   uploaderId   String
-  uploader     User     @relation(fields: [uploaderId], references: [id], onDelete: Cascade)
+  uploader     User        @relation(fields: [uploaderId], references: [id], onDelete: Cascade)
   url          String
   name         String
   mimeType     String
   size         Int
   projectId    String?
-  project      Project?  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  project      Project?    @relation(fields: [projectId], references: [id], onDelete: Cascade)
   proposalId   String?
-  proposal     Proposal? @relation(fields: [proposalId], references: [id], onDelete: Cascade)
+  proposal     Proposal?   @relation(fields: [proposalId], references: [id], onDelete: Cascade)
   messageId    String?
-  message      Message?  @relation(fields: [messageId], references: [id], onDelete: Cascade)
-  createdAt    DateTime @default(now())
+  message      Message?    @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  submissionId String?
+  submission   Submission? @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+  /// PUBLIC (served from url) | PRIVATE (served only via /api/files/[id] to authorized users)
+  visibility   String      @default("PUBLIC")
+  storageKey   String?
+  createdAt    DateTime    @default(now())
 }
 
 model Notification {
@@ -179,5 +391,46 @@ model Notification {
   body      String
   link      String?
   read      Boolean  @default(false)
+  /// prevents duplicates (e.g. deadline reminders): unique per logical event
+  dedupeKey String?  @unique
   createdAt DateTime @default(now())
+
+  @@index([userId, read, createdAt])
+}
+
+model Report {
+  id           String    @id @default(cuid())
+  reporterId   String
+  reporter     User      @relation("Reporter", fields: [reporterId], references: [id], onDelete: Cascade)
+  /// REVIEW | PROJECT | USER | MESSAGE
+  targetType   String
+  targetId     String
+  reason       String
+  details      String    @default("")
+  /// OPEN | RESOLVED | DISMISSED
+  status       String    @default("OPEN")
+  resolvedById String?
+  resolution   String?
+  resolvedAt   DateTime?
+  createdAt    DateTime  @default(now())
+
+  @@unique([reporterId, targetType, targetId])
+  @@index([status, createdAt])
+  @@index([targetType, targetId])
+}
+
+/// Moderation / admin action log with reason.
+model AuditLog {
+  id         String   @id @default(cuid())
+  actorId    String
+  actor      User     @relation(fields: [actorId], references: [id], onDelete: Cascade)
+  action     String
+  targetType String
+  targetId   String
+  reason     String   @default("")
+  meta       String?
+  createdAt  DateTime @default(now())
+
+  @@index([targetType, targetId])
+  @@index([createdAt])
 }

@@ -1,114 +1,38 @@
-import { NextResponse } from "next/server";
-import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import {
-  ALLOWED_CHAT,
-  ALLOWED_IMAGE,
-  MAX_AVATAR_SIZE,
-  MAX_FILE_SIZE,
-  saveUpload,
-  type UploadKind,
-} from "@/lib/uploads";
+import { ApiError, handle, ok, requireUser } from "@/lib/api";
+import { ALLOWED_CHAT, ALLOWED_IMAGE, MAX_AVATAR_SIZE, MAX_FILE_SIZE, UploadError, saveUpload, type UploadKind } from "@/lib/uploads";
 
 export const runtime = "nodejs";
+const PRIVATE: UploadKind[] = ["proposals", "chat", "submissions"];
+const ATTACH: UploadKind[] = ["projects", "proposals", "chat", "submissions"];
 
-export async function POST(req: Request) {
-  const user = await getCurrentUser();
-  if (!user) {
-    return NextResponse.json({ error: "Вуруд лозим" }, { status: 401 });
-  }
-
+/**
+ * Upload a file. Image kinds (avatars, covers, portfolio) are public.
+ * Attachment kinds create an unlinked Attachment owned by the uploader; it is linked when the
+ * message / proposal / submission / project is saved. Private attachments are served only via /api/files/[id].
+ */
+export const POST = handle(async (req: Request) => {
+  const user = await requireUser();
+  const form = await req.formData().catch(() => { throw new ApiError("invalid"); });
+  const file = form.get("file");
+  const kind = String(form.get("kind") || "") as UploadKind;
+  if (!(file instanceof File)) throw new ApiError("invalid");
+  if (!["avatars", "covers", "portfolio", ...ATTACH].includes(kind)) throw new ApiError("invalid");
   try {
-    const form = await req.formData();
-    const file = form.get("file");
-    const kind = String(form.get("kind") || "") as UploadKind;
-    const projectId = form.get("projectId")
-      ? String(form.get("projectId"))
-      : null;
-    const proposalId = form.get("proposalId")
-      ? String(form.get("proposalId"))
-      : null;
-
-    if (!(file instanceof File)) {
-      return NextResponse.json({ error: "Файл лозим аст" }, { status: 400 });
+    if (kind === "avatars" || kind === "covers" || kind === "portfolio") {
+      const saved = await saveUpload(file, kind, { maxSize: kind === "avatars" ? MAX_AVATAR_SIZE : MAX_FILE_SIZE, allowed: ALLOWED_IMAGE });
+      if (kind === "avatars") await prisma.user.update({ where: { id: user.id }, data: { avatarUrl: saved.url } });
+      if (kind === "covers" && user.profile) await prisma.freelancerProfile.update({ where: { userId: user.id }, data: { coverUrl: saved.url } });
+      return ok({ url: saved.url, avatarUrl: saved.url });
     }
-    if (!["avatars", "projects", "proposals", "chat"].includes(kind)) {
-      return NextResponse.json({ error: "Намуди нодуруст" }, { status: 400 });
-    }
-
-    if (kind === "avatars") {
-      const saved = await saveUpload(file, "avatars", {
-        imagesOnly: true,
-        maxSize: MAX_AVATAR_SIZE,
-        allowed: ALLOWED_IMAGE,
-      });
-      await prisma.user.update({
-        where: { id: user.id },
-        data: { avatarUrl: saved.url },
-      });
-      return NextResponse.json({ ok: true, ...saved, avatarUrl: saved.url });
-    }
-
-    if (kind === "projects") {
-      if (!projectId) {
-        return NextResponse.json({ error: "projectId лозим" }, { status: 400 });
-      }
-      const project = await prisma.project.findUnique({ where: { id: projectId } });
-      if (!project || project.clientId !== user.id) {
-        return NextResponse.json({ error: "Дастрасӣ нест" }, { status: 403 });
-      }
-      const saved = await saveUpload(file, "projects", {
-        maxSize: MAX_FILE_SIZE,
-        allowed: ALLOWED_CHAT,
-      });
-      const att = await prisma.attachment.create({
-        data: {
-          uploaderId: user.id,
-          projectId,
-          url: saved.url,
-          name: saved.name,
-          mimeType: saved.mimeType,
-          size: saved.size,
-        },
-      });
-      return NextResponse.json({ ok: true, attachment: att });
-    }
-
-    if (kind === "proposals") {
-      if (!proposalId) {
-        return NextResponse.json({ error: "proposalId лозим" }, { status: 400 });
-      }
-      const proposal = await prisma.proposal.findUnique({
-        where: { id: proposalId },
-      });
-      if (!proposal || proposal.freelancerId !== user.id) {
-        return NextResponse.json({ error: "Дастрасӣ нест" }, { status: 403 });
-      }
-      const saved = await saveUpload(file, "proposals", {
-        maxSize: MAX_FILE_SIZE,
-        allowed: ALLOWED_CHAT,
-      });
-      const att = await prisma.attachment.create({
-        data: {
-          uploaderId: user.id,
-          proposalId,
-          url: saved.url,
-          name: saved.name,
-          mimeType: saved.mimeType,
-          size: saved.size,
-        },
-      });
-      return NextResponse.json({ ok: true, attachment: att });
-    }
-
-    // chat uploads are attached when sending message
-    const saved = await saveUpload(file, "chat", {
-      maxSize: MAX_FILE_SIZE,
-      allowed: ALLOWED_CHAT,
-    });
-    return NextResponse.json({ ok: true, ...saved });
+    const isPrivate = PRIVATE.includes(kind);
+    const saved = await saveUpload(file, kind, { maxSize: MAX_FILE_SIZE, allowed: ALLOWED_CHAT, privateFile: isPrivate });
+    const att = await prisma.attachment.create({ data: { uploaderId: user.id, url: saved.url, storageKey: saved.storageKey, name: saved.name.slice(0, 200), mimeType: saved.mimeType, size: saved.size, visibility: isPrivate ? "PRIVATE" : "PUBLIC" } });
+    const url = isPrivate ? `/api/files/${att.id}` : saved.url;
+    if (isPrivate) await prisma.attachment.update({ where: { id: att.id }, data: { url } });
+    return ok({ attachment: { id: att.id, name: att.name, mimeType: att.mimeType, size: att.size, url } }, 201);
   } catch (e) {
-    const msg = e instanceof Error ? e.message : "Хатои боргузорӣ";
-    return NextResponse.json({ error: msg }, { status: 400 });
+    if (e instanceof UploadError) throw new ApiError("file_invalid", 400, { reason: e.message });
+    throw e;
   }
-}
+});

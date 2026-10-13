@@ -24,10 +24,12 @@ export const ALLOWED_DOC = new Set([
 
 export const ALLOWED_CHAT = new Set([...ALLOWED_IMAGE, ...ALLOWED_DOC]);
 
-export type UploadKind = "avatars" | "projects" | "proposals" | "chat";
+export type UploadKind = "avatars" | "covers" | "portfolio" | "projects" | "proposals" | "chat" | "submissions";
 
 export type SavedFile = {
   url: string;
+  /** set for private files: where the bytes live (never sent to browsers) */
+  storageKey?: string;
   name: string;
   mimeType: string;
   size: number;
@@ -141,26 +143,38 @@ async function saveS3(
 export async function saveUpload(
   file: File,
   kind: UploadKind,
-  opts?: { imagesOnly?: boolean; maxSize?: number; allowed?: Set<string> }
+  opts?: { imagesOnly?: boolean; maxSize?: number; allowed?: Set<string>; privateFile?: boolean }
 ): Promise<SavedFile> {
   const maxSize = opts?.maxSize ?? MAX_FILE_SIZE;
   const allowed =
     opts?.allowed ?? (opts?.imagesOnly ? ALLOWED_IMAGE : ALLOWED_CHAT);
 
-  if (!file || file.size === 0) throw new Error("Файл холӣ аст");
-  if (file.size > maxSize) {
-    throw new Error(
-      `Андозаи файл аз ${Math.round(maxSize / 1024 / 1024)} МБ зиёд аст`
-    );
-  }
+  if (!file || file.size === 0) throw new UploadError("empty");
+  if (file.size > maxSize) throw new UploadError("too_large");
   const mime = file.type || "application/octet-stream";
-  if (!allowed.has(mime)) {
-    throw new Error("Намуди файл иҷозат дода нашудааст");
-  }
+  if (!allowed.has(mime)) throw new UploadError("type");
 
-  const filename = `${Date.now()}-${randomBytes(6).toString("hex")}${extFor(mime)}`;
+  const filename = `${Date.now()}-${randomBytes(12).toString("hex")}${extFor(mime)}`;
   const buf = Buffer.from(await file.arrayBuffer());
   const prov = provider();
+
+  if (opts?.privateFile) {
+    // Private files: bytes are never placed under /public. Browsers only get /api/files/<attachmentId>.
+    if (prov === "local") {
+      const dir = path.join(privateRoot(), kind);
+      await mkdir(dir, { recursive: true });
+      await writeFile(path.join(dir, filename), new Uint8Array(buf));
+      return { url: "", storageKey: `local:${kind}/${filename}`, name: file.name || filename, mimeType: mime, size: file.size };
+    }
+    if (prov === "s3") {
+      const key = `private/${kind}/${filename}`;
+      await s3Client().send(new PutObjectCommand({ Bucket: process.env.S3_BUCKET!, Key: key, Body: buf, ContentType: mime }));
+      return { url: "", storageKey: `s3:${key}`, name: file.name || filename, mimeType: mime, size: file.size };
+    }
+    // cloudinary: random, unguessable URL kept server-side and proxied through /api/files
+    const u = await saveCloudinary(buf, kind, filename, mime);
+    return { url: "", storageKey: `url:${u}`, name: file.name || filename, mimeType: mime, size: file.size };
+  }
 
   let url: string;
   if (prov === "cloudinary") {
@@ -180,4 +194,37 @@ export function storageNote() {
     return "Local disk storage — files are lost on Render free-tier restart unless you configure Cloudinary or S3.";
   }
   return `Using ${p} storage.`;
+}
+
+export class UploadError extends Error {}
+
+export function privateRoot() {
+  return process.env.PRIVATE_STORAGE_DIR || path.join(process.cwd(), "storage", "private");
+}
+function s3Client() {
+  return new S3Client({
+    region: process.env.S3_REGION || "auto",
+    endpoint: process.env.S3_ENDPOINT || undefined,
+    forcePathStyle: Boolean(process.env.S3_ENDPOINT),
+    credentials: { accessKeyId: process.env.S3_ACCESS_KEY_ID || "", secretAccessKey: process.env.S3_SECRET_ACCESS_KEY || "" },
+  });
+}
+/** Read private file bytes by storageKey. */
+export async function readPrivate(storageKey: string): Promise<Uint8Array | null> {
+  const { readFile } = await import("fs/promises");
+  if (storageKey.startsWith("local:")) {
+    const rel = storageKey.slice(6);
+    if (rel.includes("..")) return null;
+    try { return new Uint8Array(await readFile(path.join(privateRoot(), rel))); } catch { return null; }
+  }
+  if (storageKey.startsWith("s3:")) {
+    const { GetObjectCommand } = await import("@aws-sdk/client-s3");
+    const r = await s3Client().send(new GetObjectCommand({ Bucket: process.env.S3_BUCKET!, Key: storageKey.slice(3) }));
+    return r.Body ? new Uint8Array(await r.Body.transformToByteArray()) : null;
+  }
+  if (storageKey.startsWith("url:")) {
+    const r = await fetch(storageKey.slice(4));
+    return r.ok ? new Uint8Array(await r.arrayBuffer()) : null;
+  }
+  return null;
 }

@@ -1,73 +1,27 @@
-import { NextResponse } from "next/server";
+import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
-import { getCurrentUser } from "@/lib/auth";
+import { ApiError, handle, int, ok, readJson, requireUser, str } from "@/lib/api";
+import { canReview } from "@/lib/domain/authz";
 import { notifyUser } from "@/lib/notifications";
 
-export async function POST(req: Request) {
-  const user = await getCurrentUser();
-  if (!user) return NextResponse.json({ error: "Вуруд лозим" }, { status: 401 });
+/** Leave a review for a completed order (participants only, once each, never self). */
+export const POST = handle(async (req: Request) => {
+  const user = await requireUser();
+  const b = await readJson(req);
+  const rating = int(b.rating);
+  const comment = str(b.comment, 2000);
+  if (!(rating >= 1 && rating <= 5)) throw new ApiError("invalid", 400, { fields: { rating: "rating" } });
+  if (comment.length < 5) throw new ApiError("invalid", 400, { fields: { comment: "min5" } });
+  const order = await prisma.order.findUnique({ where: { id: str(b.orderId, 50) }, include: { reviews: true, project: true } });
+  if (!order) throw new ApiError("not_found", 404);
+  const check = canReview(user, order, order.reviews);
+  if (!check.ok) throw new ApiError(check.code, check.code === "not_participant" ? 403 : 400);
   try {
-    const body = await req.json();
-    const projectId = String(body.projectId || "");
-    const rating = Number(body.rating);
-    const comment = String(body.comment || "").trim();
-
-    if (!projectId || rating < 1 || rating > 5 || !comment) {
-      return NextResponse.json({ error: "Маълумотро пур кунед" }, { status: 400 });
-    }
-
-    const project = await prisma.project.findUnique({
-      where: { id: projectId },
-      include: { proposals: { where: { status: "ACCEPTED" } } },
-    });
-    if (!project || project.status !== "COMPLETED") {
-      return NextResponse.json({ error: "Танҳо пас аз анҷом" }, { status: 400 });
-    }
-    const accepted = project.proposals[0];
-    if (!accepted) {
-      return NextResponse.json({ error: "Пешниҳод нест" }, { status: 400 });
-    }
-
-    let toUserId: string | null = null;
-    if (user.id === project.clientId) {
-      toUserId = accepted.freelancerId;
-    } else if (user.id === accepted.freelancerId) {
-      toUserId = project.clientId;
-    } else {
-      return NextResponse.json({ error: "Дастрасӣ нест" }, { status: 403 });
-    }
-
-    const existing = await prisma.review.findUnique({
-      where: { projectId_fromUserId: { projectId, fromUserId: user.id } },
-    });
-    if (existing) {
-      return NextResponse.json(
-        { error: "Шумо аллакай баҳо додаед" },
-        { status: 400 }
-      );
-    }
-
-    await prisma.review.create({
-      data: {
-        projectId,
-        fromUserId: user.id,
-        toUserId,
-        rating,
-        comment,
-      },
-    });
-
-    await notifyUser({
-      userId: toUserId,
-      type: "NEW_REVIEW",
-      title: "Баҳои нав",
-      body: `${user.name} ба шумо ${rating} ситора дод`,
-      link: `/projects/${projectId}`,
-    });
-
-    return NextResponse.json({ ok: true });
+    await prisma.review.create({ data: { orderId: order.id, projectId: order.projectId, fromUserId: user.id, toUserId: check.toUserId, rating, comment } });
   } catch (e) {
-    console.error(e);
-    return NextResponse.json({ error: "Хатои сервер" }, { status: 500 });
+    if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002") throw new ApiError("already_reviewed");
+    throw e;
   }
-}
+  await notifyUser({ userId: check.toUserId, type: "NEW_REVIEW", params: { name: user.name, rating }, link: `/orders/${order.id}` });
+  return ok({}, 201);
+});

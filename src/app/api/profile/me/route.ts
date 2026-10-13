@@ -1,21 +1,10 @@
-import { NextResponse } from "next/server";
-import { getCurrentUser } from "@/lib/auth";
+import { prisma } from "@/lib/prisma";
+import { ApiError, handle, ok, requireUser } from "@/lib/api";
 
-export async function GET() {
-  const user = await getCurrentUser();
-  if (!user || user.role !== "FREELANCER") {
-    return NextResponse.json(
-      { error: "Танҳо фрилансерҳо метавонанд профилро таҳрир кунанд" },
-      { status: 403 }
-    );
-  }
-  return NextResponse.json({
-    name: user.name,
-    title: user.profile?.title || "",
-    bio: user.profile?.bio || "",
-    skills: user.profile?.skills || "",
-    hourlyRate: user.profile?.hourlyRate || 10,
-    portfolio: user.profile?.portfolio || "",
-    avatarUrl: user.avatarUrl,
-  });
-}
+export const GET = handle(async () => {
+  const user = await requireUser();
+  if (!user.profile) throw new ApiError("only_freelancer", 403);
+  const items = await prisma.portfolioItem.findMany({ where: { profileId: user.profile.id }, orderBy: { createdAt: "desc" } });
+  const p = user.profile;
+  return ok({ profile: { name: user.name, city: user.city, avatarUrl: user.avatarUrl, title: p.title, bio: p.bio, skills: p.skills, languages: p.languages, rateMin: p.rateMin, rateMax: p.rateMax, experienceYears: p.experienceYears, available: p.available, coverUrl: p.coverUrl }, portfolio: items });
+});

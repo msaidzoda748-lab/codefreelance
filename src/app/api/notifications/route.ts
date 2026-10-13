@@ -1,48 +1,26 @@
-import { NextResponse } from "next/server";
-import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { handle, ok, readJson, requireUser } from "@/lib/api";
+import { maybeRunDeadlineJob } from "@/lib/services/deadlines";
 
-export async function GET(req: Request) {
-  const user = await getCurrentUser();
-  if (!user) return NextResponse.json({ error: "Вуруд лозим" }, { status: 401 });
-
-  const url = new URL(req.url);
-  const unreadOnly = url.searchParams.get("unread") === "1";
-  const limit = Math.min(Number(url.searchParams.get("limit") || 20), 50);
-
-  const [notifications, unreadCount] = await Promise.all([
-    prisma.notification.findMany({
-      where: { userId: user.id, ...(unreadOnly ? { read: false } : {}) },
-      orderBy: { createdAt: "desc" },
-      take: limit,
-    }),
-    prisma.notification.count({
-      where: { userId: user.id, read: false },
-    }),
+const PAGE = 20;
+export const GET = handle(async (req: Request) => {
+  const user = await requireUser();
+  void maybeRunDeadlineJob(); // lazy fallback when no external cron is configured (idempotent)
+  const sp = new URL(req.url).searchParams;
+  const page = Math.max(1, parseInt(sp.get("page") || "1") || 1);
+  const where = { userId: user.id, ...(sp.get("unread") === "1" ? { read: false } : {}) };
+  const [items, total, unread] = await Promise.all([
+    prisma.notification.findMany({ where, orderBy: { createdAt: "desc" }, skip: (page - 1) * PAGE, take: PAGE }),
+    prisma.notification.count({ where }),
+    prisma.notification.count({ where: { userId: user.id, read: false } }),
   ]);
-
-  return NextResponse.json({ notifications, unreadCount });
-}
-
-export async function PATCH(req: Request) {
-  const user = await getCurrentUser();
-  if (!user) return NextResponse.json({ error: "Вуруд лозим" }, { status: 401 });
-
-  const body = await req.json().catch(() => ({}));
-  if (body.all) {
-    await prisma.notification.updateMany({
-      where: { userId: user.id, read: false },
-      data: { read: true },
-    });
-    return NextResponse.json({ ok: true });
-  }
-  const id = String(body.id || "");
-  if (!id) {
-    return NextResponse.json({ error: "id лозим" }, { status: 400 });
-  }
-  await prisma.notification.updateMany({
-    where: { id, userId: user.id },
-    data: { read: true },
-  });
-  return NextResponse.json({ ok: true });
-}
+  return ok({ notifications: items, unread, page, pages: Math.max(1, Math.ceil(total / PAGE)) });
+});
+/** Mark as read: { ids: [...] } or { all: true }. */
+export const POST = handle(async (req: Request) => {
+  const user = await requireUser();
+  const b = await readJson(req);
+  const where = b.all ? { userId: user.id, read: false } : { userId: user.id, id: { in: Array.isArray(b.ids) ? b.ids.map(String) : [] } };
+  const r = await prisma.notification.updateMany({ where, data: { read: true } });
+  return ok({ marked: r.count });
+});
