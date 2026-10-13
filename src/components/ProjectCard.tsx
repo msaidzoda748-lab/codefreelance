@@ -6,10 +6,11 @@ import { useI18n } from "@/i18n/I18nProvider";
 import { useBookmarks } from "@/lib/bookmarks";
 import { somoniT, timeAgoT } from "@/lib/timeago";
 import { catKeyOf } from "@/data/categories";
+import { fmt } from "@/i18n/format";
 import ProposalModal from "./ProposalModal";
 import StatusBadge from "./StatusBadge";
 
-export type ProjectCardData = { id: string; title: string; description: string; category: string; skills: string; budget: number; coverUrl: string | null; city: string; createdAt: string | Date; status: string };
+export type ProjectCardData = { id: string; title: string; description: string; category: string; categoryLabel?: string; skills: string; budget: number; budgetMin?: number | null; budgetMax?: number | null; coverUrl: string | null; city: string; createdAt: string | Date; status: string; proposals?: number; deadline?: string | Date };
 
 const TONE: Record<string, string> = { design: "bg-purple-50 text-purple-700 ring-purple-100", dev: "bg-sky-50 text-sky-700 ring-sky-100", bots: "bg-amber-50 text-amber-700 ring-amber-100", marketing: "bg-orange-50 text-orange-700 ring-orange-100", web: "bg-brand-50 text-brand-700 ring-brand-100", all: "bg-slate-100 text-slate-700 ring-slate-200" };
 
@@ -30,7 +31,7 @@ export default function ProjectCard({ p, showStatus = false }: { p: ProjectCardD
       <div className="flex min-w-0 flex-1 flex-col p-4 sm:p-5">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
-            <span className={`inline-flex rounded-full px-2.5 py-0.5 text-[11px] font-semibold ring-1 ${TONE[ck]}`}>{ck === "all" ? p.category : t.cats[ck]}</span>
+            <span className={`inline-flex rounded-full px-2.5 py-0.5 text-[11px] font-semibold ring-1 ${TONE[ck]}`}>{p.categoryLabel ?? (ck === "all" ? p.category : t.cats[ck])}</span>
             <h3 className="mt-1.5 text-base font-bold leading-snug text-ink sm:text-lg dark:text-white">
               <Link href={`/projects/${p.id}`} className="text-inherit no-underline hover:text-brand-700 focus-visible:underline">{p.title}</Link>
             </h3>
@@ -47,10 +48,11 @@ export default function ProjectCard({ p, showStatus = false }: { p: ProjectCardD
         </div>
         <div className="mt-auto flex flex-wrap items-end justify-between gap-3 pt-4">
           <div>
-            <div className="text-lg font-extrabold text-brand-600">{somoniT(p.budget)}</div>
+            <div className="text-lg font-extrabold text-brand-600">{p.budgetMin != null && p.budgetMax != null ? `${somoniT(p.budgetMin).replace(" сомонӣ", "")}–${somoniT(p.budgetMax)}` : somoniT(p.budget)}</div>
             <div className="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-ink-muted">
               <span className="inline-flex items-center gap-1"><Clock className="h-3.5 w-3.5" /><span suppressHydrationWarning>{timeAgoT(p.createdAt, t)}</span></span>
               <span className="inline-flex items-center gap-1"><MapPin className="h-3.5 w-3.5" />{p.city}</span>
+              {typeof p.proposals === "number" && <span>{fmt(t.pl.proposals, { n: p.proposals })}</span>}
             </div>
           </div>
           {p.status === "OPEN" && (

@@ -1,245 +1,147 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Calendar, CheckCircle2, FileText, MapPin, MessageCircle, Tag, Wallet } from "lucide-react";
+import { Calendar, Clock, Languages, MapPin, Pencil, Users, Wallet } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { avgRating, getCurrentUser } from "@/lib/auth";
-import { formatDate, formatMoney, parseSkills, statusLabel } from "@/lib/utils";
+import { parseSkills } from "@/lib/utils";
+import { getDict, getLang } from "@/i18n/server";
+import { fdate, fmt, money, moneyRange } from "@/i18n/format";
+import { catName } from "@/lib/queries/projects";
 import StatusBadge from "@/components/StatusBadge";
 import Stars from "@/components/Stars";
 import Avatar from "@/components/Avatar";
-import ProposalForm from "@/components/ProposalForm";
-import AcceptProposalButton from "@/components/AcceptProposalButton";
-import CompleteProjectButton from "@/components/CompleteProjectButton";
-import ReviewForm from "@/components/ReviewForm";
+import ActionButton from "@/components/ui/ActionButton";
+import { ProposalButton } from "@/components/ProposalModal";
+import ProposalsOwnerList from "@/components/ProposalsOwnerList";
+import ReportButton from "@/components/ReportButton";
+import { AttachmentList } from "@/components/ui/FileUploader";
+import BookmarkButton from "@/components/BookmarkButton";
 
 export const dynamic = "force-dynamic";
 
-export default async function ProjectDetailPage({
-  params,
-}: {
-  params: { id: string };
-}) {
+export async function generateMetadata({ params }: { params: { id: string } }) {
+  const p = await prisma.project.findUnique({ where: { id: params.id }, select: { title: true, hidden: true, status: true } });
+  return { title: p && !p.hidden && p.status !== "DRAFT" ? p.title : getDict().errors.not_found };
+}
+
+export default async function ProjectDetailPage({ params }: { params: { id: string } }) {
+  const t = getDict(); const lang = getLang();
   const user = await getCurrentUser();
   const project = await prisma.project.findUnique({
     where: { id: params.id },
     include: {
-      client: { include: { reviewsRecv: true } },
-      attachments: true,
-      proposals: {
-        include: {
-          freelancer: {
-            include: { profile: true, reviewsRecv: true },
-          },
-          attachments: true,
-        },
-        orderBy: { createdAt: "asc" },
-      },
-      reviews: { include: { fromUser: true, toUser: true } },
+      client: { include: { reviewsRecv: true, _count: { select: { projects: true } } } },
+      categoryRel: true, skillsRel: true,
+      attachments: { where: { proposalId: null, messageId: null, submissionId: null } },
+      order: { select: { id: true, clientId: true, freelancerId: true } },
+      _count: { select: { proposals: { where: { status: { not: "WITHDRAWN" } } } } },
     },
   });
   if (!project) notFound();
+  const isOwner = user?.id === project.clientId;
+  const isAdmin = !!user?.isAdmin;
+  // Drafts and hidden projects are visible only to their owner (and admins).
+  if ((project.status === "DRAFT" || project.hidden) && !isOwner && !isAdmin) notFound();
 
-  const isClient = user?.id === project.clientId;
-  const myProposal = user
-    ? project.proposals.find((p) => p.freelancerId === user.id)
-    : null;
-  const accepted = project.proposals.find((p) => p.status === "ACCEPTED");
-  const isAcceptedFreelancer = accepted && user?.id === accepted.freelancerId;
-  const canChat =
-    project.status !== "OPEN" && (isClient || isAcceptedFreelancer);
-  const myReview = user
-    ? project.reviews.find((r) => r.fromUserId === user.id)
-    : null;
-  const canReview =
-    project.status === "COMPLETED" &&
-    (isClient || isAcceptedFreelancer) &&
-    !myReview;
+  const ownerProposals = isOwner
+    ? await prisma.proposal.findMany({ where: { projectId: project.id, status: { not: "WITHDRAWN" } }, orderBy: { createdAt: "asc" }, include: { attachments: true, freelancer: { include: { profile: true, reviewsRecv: true } } } })
+    : [];
+  const mine = user && !isOwner ? await prisma.proposal.findUnique({ where: { projectId_freelancerId: { projectId: project.id, freelancerId: user.id } }, include: { portfolioItems: { select: { id: true } }, attachments: true } }) : null;
+  const isParticipant = project.order && (project.order.clientId === user?.id || project.order.freelancerId === user?.id);
+  const skills = project.skillsRel.length ? project.skillsRel.map((s) => s.name) : parseSkills(project.skills);
+  const propOpen = project.status === "OPEN" && (!project.proposalDeadline || project.proposalDeadline >= new Date(new Date().toDateString()));
+  const pmini = { id: project.id, title: project.title, budget: project.budgetMax ?? project.budget };
+
+  const facts = [
+    { icon: Wallet, label: t.pd.budget, value: moneyRange(project, t) },
+    { icon: Calendar, label: t.pd.deadline, value: fdate(project.deadline, lang) },
+    { icon: Clock, label: t.pd.proposalDeadline, value: fdate(project.proposalDeadline, lang) },
+    { icon: Languages, label: t.pd.language, value: t.pl[`lang_${(project.language || "tj") as "tj"}`] ?? project.language },
+    { icon: MapPin, label: t.pd.city, value: project.city },
+    { icon: Users, label: t.pd.proposalsCount, value: String(project._count.proposals) },
+  ];
 
   return (
     <div className="space-y-6 animate-slide-up">
-      <div className="card shadow-soft overflow-hidden !p-0">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={project.coverUrl || "/img/covers/website.svg"} alt="" className="block h-56 w-full object-cover sm:h-64" />
-        <div className="px-6 py-5">
-          <div className="flex flex-wrap items-start justify-between gap-3">
-            <div>
-              <h1 className="text-2xl font-extrabold tracking-tight sm:text-3xl">
-                {project.title}
-              </h1>
-              <div className="mt-2 flex flex-wrap items-center gap-3 text-sm">
-                <span className="inline-flex items-center gap-2">
-                  <Avatar name={project.client.name} src={project.client.avatarUrl} size="sm" />
-                  <span>
-                    Мизоҷ: <strong>{project.client.name}</strong>
-                  </span>
-                </span>
-                <Stars
-                  value={avgRating(project.client.reviewsRecv)}
-                  count={project.client.reviewsRecv.length}
-                />
+      {project.status === "DRAFT" && <p role="status" className="rounded-2xl bg-amber-50 p-4 text-sm text-amber-800">{t.pd.draftNotice}</p>}
+      {project.hidden && <p role="status" className="rounded-2xl bg-rose-50 p-4 text-sm text-rose-700">{t.pd.hiddenNotice}</p>}
+      <div className="grid gap-6 lg:grid-cols-[1fr_340px]">
+        <article className="card shadow-soft min-w-0 overflow-hidden !p-0">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={project.coverUrl || "/img/covers/website.svg"} alt="" className="block h-48 w-full object-cover sm:h-64" />
+          <div className="space-y-5 p-5 sm:p-6">
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div className="min-w-0">
+                <p className="text-xs font-semibold uppercase tracking-wide text-brand-700">{catName(project.categoryRel, lang, project.category)}</p>
+                <h1 className="mt-1 break-words text-2xl font-extrabold tracking-tight text-ink sm:text-3xl" data-testid="project-title">{project.title}</h1>
+                <p className="mt-1 text-xs text-ink-muted">{t.pd.posted}: {fdate(project.publishedAt || project.createdAt, lang)}</p>
               </div>
+              <div className="flex items-center gap-2"><StatusBadge status={project.status} /><BookmarkButton id={project.id} /></div>
             </div>
-            <StatusBadge status={project.status} />
+            <p className="whitespace-pre-line break-words leading-relaxed text-ink-muted">{project.description}</p>
+            {skills.length > 0 && <ul className="flex flex-wrap gap-2" aria-label={t.pf.skills}>{skills.map((s) => <li key={s} className="chip">{s}</li>)}</ul>}
+            <AttachmentList files={project.attachments.map((a) => ({ id: a.id, name: a.name, mimeType: a.mimeType, url: a.visibility === "PUBLIC" && a.url ? a.url : `/api/files/${a.id}` }))} />
+            <div className="flex justify-end"><ReportButton targetType="PROJECT" targetId={project.id} /></div>
           </div>
-        </div>
-        <div className="space-y-4 px-6 py-5">
-          <p className="whitespace-pre-wrap leading-relaxed text-slate-700 dark:text-slate-300">
-            {project.description}
-          </p>
-          <div className="flex flex-wrap gap-4 text-sm">
-            <span className="inline-flex items-center gap-1.5 font-semibold text-brand-700 dark:text-brand-300">
-              <Wallet className="h-4 w-4" />
-              {formatMoney(project.budget)}
-            </span>
-            <span className="inline-flex items-center gap-1.5 muted">
-              <Tag className="h-4 w-4" />
-              {project.category}
-            </span>
-            <span className="inline-flex items-center gap-1.5 muted"><MapPin className="h-4 w-4" />{project.city}</span>
-            <span className="inline-flex items-center gap-1.5 muted">
-              <Calendar className="h-4 w-4" />
-              {formatDate(project.deadline)}
-            </span>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            {parseSkills(project.skills).map((s) => (
-              <span key={s} className="chip">
-                {s}
-              </span>
-            ))}
-          </div>
-          {project.attachments.length > 0 && (
-            <div className="flex flex-wrap gap-2 pt-1">
-              {project.attachments.map((a) => (
-                <a
-                  key={a.id}
-                  href={a.url}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-medium text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
-                >
-                  <FileText className="h-3.5 w-3.5" />
-                  {a.name}
-                </a>
+        </article>
+
+        <aside className="space-y-4">
+          <div className="card">
+            <dl className="grid grid-cols-2 gap-3 text-sm lg:grid-cols-1">
+              {facts.map((f) => (
+                <div key={f.label} className="flex items-start gap-2"><f.icon className="mt-0.5 h-4 w-4 shrink-0 text-brand-600" aria-hidden /><div><dt className="text-xs text-ink-muted">{f.label}</dt><dd className="font-semibold text-ink">{f.value}</dd></div></div>
               ))}
+            </dl>
+            <div className="mt-5 space-y-2">
+              {isOwner ? (
+                <>
+                  <Link href={`/projects/${project.id}/edit`} className="btn-secondary w-full no-underline"><Pencil className="h-4 w-4" aria-hidden />{t.pd.editProject}</Link>
+                  {project.status === "DRAFT" && <ActionButton url={`/api/projects/${project.id}`} method="PATCH" body={{ action: "publish" }} label={t.dash.publish} className="btn-primary w-full" testId="publish" />}
+                  {project.status === "OPEN" && <ActionButton url={`/api/projects/${project.id}`} method="PATCH" body={{ action: "close" }} label={t.dash.close} className="btn-secondary w-full" confirm={t.dash.close + "?"} />}
+                </>
+              ) : mine && mine.status !== "WITHDRAWN" ? (
+                <div className="rounded-2xl bg-brand-50 p-4 text-sm" data-testid="my-proposal">
+                  <div className="mb-2 flex items-center justify-between"><strong>{t.pd.yourProposal}</strong><StatusBadge status={mine.status} /></div>
+                  <p>{money(mine.price, t)} · {fmt(t.pd.delivery, { n: mine.deliveryDays })}</p>
+                  <p className="mt-2 line-clamp-4 whitespace-pre-line text-ink-muted">{mine.coverLetter}</p>
+                  {mine.status === "SENT" && propOpen && (
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      <ProposalButton project={pmini} label={t.common.edit} className="btn-secondary" existing={{ id: mine.id, price: mine.price, deliveryDays: mine.deliveryDays, coverLetter: mine.coverLetter, portfolioIds: mine.portfolioItems.map((p) => p.id) }} />
+                      <ActionButton url={`/api/proposals/${mine.id}`} method="PATCH" body={{ action: "withdraw" }} label={t.pd.withdraw} confirm={t.pd.withdrawConfirm} className="btn-secondary" testId="withdraw" />
+                    </div>
+                  )}
+                </div>
+              ) : propOpen ? (
+                <ProposalButton project={pmini} label={mine ? t.pd.resend : t.pd.propose} className="btn-primary w-full" />
+              ) : project.status !== "DRAFT" && <p className="rounded-2xl bg-slate-50 p-3 text-sm text-ink-muted">{t.pd.closedNotice}</p>}
+              {isParticipant && project.order && <Link href={`/orders/${project.order.id}`} className="btn-primary w-full no-underline" data-testid="go-order">{t.pd.goOrder}</Link>}
             </div>
-          )}
-          <div className="flex flex-wrap gap-3 pt-2">
-            {canChat && (
-              <Link
-                href={`/projects/${project.id}/chat`}
-                className="btn-primary no-underline"
-              >
-                <MessageCircle className="h-4 w-4" />
-                Чат
-              </Link>
-            )}
-            {isClient && project.status === "IN_PROGRESS" && (
-              <CompleteProjectButton projectId={project.id} />
-            )}
           </div>
-        </div>
+          <div className="card">
+            <h2 className="mb-3 text-sm font-bold text-ink-muted">{t.pd.client}</h2>
+            <Link href={`/freelancers/${project.client.id}`} className="flex items-center gap-3 no-underline">
+              <Avatar name={project.client.name} src={project.client.avatarUrl} size="md" />
+              <span><span className="block font-semibold text-ink">{project.client.name}</span><Stars value={avgRating(project.client.reviewsRecv)} count={project.client.reviewsRecv.filter((r) => !r.hidden).length} /></span>
+            </Link>
+            <p className="mt-2 text-xs text-ink-muted">{fmt(t.pd.clientProjects, { n: project.client._count.projects })}</p>
+          </div>
+        </aside>
       </div>
 
-      <section>
-        <h2 className="mb-4 text-xl font-bold">
-          Пешниҳодҳо ({project.proposals.length})
-        </h2>
-        <div className="space-y-3">
-          {project.proposals.map((p) => (
-            <div key={p.id} className="card-hover !hover:translate-y-0">
-              <div className="flex flex-wrap items-start justify-between gap-3">
-                <div className="flex items-center gap-3">
-                  <Avatar name={p.freelancer.name} src={p.freelancer.avatarUrl} />
-                  <div>
-                    <Link
-                      href={`/freelancers/${p.freelancerId}`}
-                      className="font-bold"
-                    >
-                      {p.freelancer.name}
-                    </Link>
-                    <div className="text-sm muted">
-                      {p.freelancer.profile?.title}
-                    </div>
-                    <Stars
-                      value={avgRating(p.freelancer.reviewsRecv)}
-                      count={p.freelancer.reviewsRecv.length}
-                    />
-                  </div>
-                </div>
-                <span className="badge bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300">
-                  {statusLabel(p.status)}
-                </span>
-              </div>
-              <p className="mt-3 text-sm leading-relaxed text-slate-700 dark:text-slate-300">
-                {p.coverLetter}
-              </p>
-              {p.attachments.length > 0 && (
-                <div className="mt-2 flex flex-wrap gap-2">
-                  {p.attachments.map((a) => (
-                    <a
-                      key={a.id}
-                      href={a.url}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="inline-flex items-center gap-1 rounded-lg bg-slate-100 px-2 py-1 text-xs dark:bg-slate-800"
-                    >
-                      <FileText className="h-3 w-3" />
-                      {a.name}
-                    </a>
-                  ))}
-                </div>
-              )}
-              <div className="mt-3 flex flex-wrap items-center gap-4 text-sm">
-                <span className="font-bold text-brand-600">
-                  {formatMoney(p.price)}
-                </span>
-                <span className="muted">{p.deliveryDays} рӯз</span>
-                {isClient &&
-                  project.status === "OPEN" &&
-                  p.status === "PENDING" && (
-                    <AcceptProposalButton
-                      projectId={project.id}
-                      proposalId={p.id}
-                    />
-                  )}
-              </div>
-            </div>
-          ))}
-          {!project.proposals.length && (
-            <p className="card text-center muted">Ҳанӯз пешниҳод нест.</p>
-          )}
-        </div>
-
-        {user?.role === "FREELANCER" &&
-          project.status === "OPEN" &&
-          !myProposal && <ProposalForm projectId={project.id} />}
-        {myProposal && project.status === "OPEN" && (
-          <p className="mt-3 flex items-center gap-2 text-sm text-emerald-700 dark:text-emerald-300">
-            <CheckCircle2 className="h-4 w-4" />
-            Шумо аллакай пешниҳод додаед ({statusLabel(myProposal.status)}).
-          </p>
-        )}
-      </section>
-
-      {project.status === "COMPLETED" && (
-        <section>
-          <h2 className="mb-4 text-xl font-bold">Баҳоҳо</h2>
-          <div className="space-y-3">
-            {project.reviews.map((r) => (
-              <div key={r.id} className="card">
-                <div className="flex items-center justify-between gap-2">
-                  <span className="inline-flex items-center gap-2 font-medium">
-                    <Avatar name={r.fromUser.name} src={r.fromUser.avatarUrl} size="sm" />
-                    {r.fromUser.name} → {r.toUser.name}
-                  </span>
-                  <Stars value={r.rating} />
-                </div>
-                <p className="mt-2 text-sm muted">{r.comment}</p>
-              </div>
-            ))}
+      {isOwner && (
+        <section className="card" aria-labelledby="props-h">
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+            <h2 id="props-h" className="text-lg font-bold text-ink">{t.pd.proposalsCount} ({ownerProposals.length})</h2>
+            <span className="text-xs text-ink-muted">{t.pd.onlyOwner}</span>
           </div>
-          {canReview && <ReviewForm projectId={project.id} />}
+          {ownerProposals.length ? (
+            <ProposalsOwnerList projectId={project.id} canHire={project.status === "OPEN"} proposals={ownerProposals.map((p) => ({
+              id: p.id, price: p.price, deliveryDays: p.deliveryDays, coverLetter: p.coverLetter, status: p.status,
+              freelancer: { id: p.freelancer.id, name: p.freelancer.name, avatarUrl: p.freelancer.avatarUrl, title: p.freelancer.profile?.title || "" },
+              rating: avgRating(p.freelancer.reviewsRecv), reviews: p.freelancer.reviewsRecv.filter((r) => !r.hidden).length,
+              attachments: p.attachments.map((a) => ({ id: a.id, name: a.name, mimeType: a.mimeType, url: `/api/files/${a.id}` })),
+            }))} />
+          ) : <p className="text-sm text-ink-muted">{t.pd.noProposalsYet}</p>}
         </section>
       )}
     </div>
