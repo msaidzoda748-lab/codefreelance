@@ -1,5 +1,6 @@
 import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
+import { normalize } from "./demo-normalize.mjs";
 
 const prisma = new PrismaClient();
 const day = 86400000;
@@ -8,7 +9,7 @@ const A = (n) => `/img/avatars/${n}.svg`;
 const C = (n) => `/img/covers/${n}.svg`;
 
 async function main() {
-  for (const m of ["passwordResetToken", "clientProfile", "notification", "attachment", "review", "message", "proposal", "project", "freelancerProfile", "session", "user"]) {
+  for (const m of ["auditLog", "report", "savedProject", "milestoneEvent", "submission", "milestone", "conversationMember", "conversation", "order", "portfolioItem", "passwordResetToken", "clientProfile", "notification", "attachment", "review", "message", "proposal", "project", "freelancerProfile", "session", "user"]) {
     await prisma[m].deleteMany();
   }
   const passwordHash = await bcrypt.hash("password123", 10);
@@ -97,15 +98,36 @@ async function main() {
     attachments: { create: { uploaderId: F["freelancer@demo.tj"].id, url: C("dashboard"), name: "maket-v1.svg", mimeType: "image/svg+xml", size: 3000 } } } });
   await prisma.message.create({ data: { projectId: prog.id, senderId: client1.id, body: "Олӣ! Графики фурӯшро калонтар кунед, лутфан.", createdAt: ago(0, 5) } });
 
-  const n = (u, type, title, body, link, read = false) => prisma.notification.create({ data: { userId: u.id, type, title, body, link, read } });
-  await n(client1, "NEW_PROPOSAL", "Пешниҳоди нав", "Дилшод Неъматов ба лоиҳаи «Сохтани вебсайти автосалон» пешниҳод дод", `/projects/${P[0].id}`);
-  await n(client1, "NEW_PROPOSAL", "Пешниҳоди нав", "Фарангис Раҷабова ба лоиҳаи «Логотип ва брендбук» пешниҳод дод", `/projects/${P[2].id}`);
-  await n(client1, "CHAT_MESSAGE", "Паёми нав", "Дилшод Неъматов: Ана макети аввалия...", `/projects/${prog.id}/chat`);
-  await n(client1, "NEW_REVIEW", "Баҳои нав", "Дилшод Неъматов ба шумо 5 ситора дод", `/projects/${prog.id}`, true);
-  await n(F["freelancer@demo.tj"], "PROPOSAL_ACCEPTED", "Пешниҳод қабул шуд", "Пешниҳоди шумо барои «Даштборди аналитикаи фурӯш» қабул шуд", `/projects/${prog.id}/chat`);
-  await n(F["freelancer@demo.tj"], "CHAT_MESSAGE", "Паёми нав", "Алишер Раҳимов: Графики фурӯшро калонтар кунед", `/projects/${prog.id}/chat`);
-
+  await normalize(prisma);
+  await extras({ client1, client2, F, P, prog, prop });
   console.log("Seed OK. Password for all demo users: password123");
+}
+
+async function extras({ client1, client2, F, P, prog, prop }) {
+  const dil = F["freelancer@demo.tj"], mad = F["designer@demo.tj"];
+  // range budget + proposal deadline + language on an open project
+  await prisma.project.update({ where: { id: P[0].id }, data: { budgetMin: 2000, budgetMax: 3000, budget: 3000, proposalDeadline: new Date(Date.now() + 10 * day), language: "ru" } });
+  await prop(P[0], "mobile@demo.tj", "Салом! Ман веб ҳам мекунам: Next.js + Prisma. Каталог ва филтрҳоро дар 2 ҳафта месозам.", 2600, 16, "SENT");
+  // a draft (visible only to its owner)
+  await prisma.project.create({ data: { clientId: client1.id, title: "Сайти корпоративӣ (сиёҳнавис)", description: "Ин сиёҳнавис аст: матни пурра баъдтар илова мешавад, ҳоло танҳо ғоя.", category: "Веб-таҳия", categoryId: "cat_web", skills: "", budget: 1500, deadline: new Date(Date.now() + 40 * day), status: "DRAFT", city: "Душанбе", coverUrl: C("website") } });
+  // the in-progress order: add a 2nd milestone that is submitted and awaiting review
+  const order = await prisma.order.findUnique({ where: { projectId: prog.id }, include: { milestones: true } });
+  if (order) {
+    const m1 = order.milestones[0];
+    await prisma.milestone.update({ where: { id: m1.id }, data: { title: "Макет ва сохтор", status: "SUBMITTED", deadline: new Date(Date.now() + 5 * day), amount: 700, events: { create: [{ actorId: dil.id, action: "start", fromStatus: "PENDING", toStatus: "IN_PROGRESS" }, { actorId: dil.id, action: "submit", fromStatus: "IN_PROGRESS", toStatus: "SUBMITTED", comment: "Макети v1" }] } } });
+    await prisma.submission.create({ data: { milestoneId: m1.id, authorId: dil.id, message: "Макети аввалия ва сохтори саҳифаҳо омода шуд. Лутфан назар кунед.", attachments: { create: { uploaderId: dil.id, url: C("dashboard"), name: "maket-v1.svg", mimeType: "image/svg+xml", size: 3000, visibility: "PRIVATE" } } } });
+    await prisma.milestone.create({ data: { orderId: order.id, title: "Графикҳо ва API", description: "Пайваст кардани маълумоти фурӯш ва графикҳо.", deadline: new Date(Date.now() + 1 * day), amount: 1000, position: 1, status: "PENDING" } });
+    await prisma.order.update({ where: { id: order.id }, data: { status: "IN_REVIEW" } });
+  }
+  await prisma.savedProject.create({ data: { userId: mad.id, projectId: P[3].id } });
+  // a reported review (for the admin panel)
+  const rv = await prisma.review.findFirst({ where: { toUserId: dil.id } });
+  if (rv) await prisma.report.create({ data: { reporterId: client2.id, targetType: "REVIEW", targetId: rv.id, reason: "fake", details: "Намунаи шикоят (demo)" } });
+  const n = (u, type, params, link, read = false) => prisma.notification.create({ data: { userId: u.id, type, title: type, body: JSON.stringify(params), link, read } });
+  await n(client1, "NEW_PROPOSAL", { name: dil.name, project: P[0].title }, `/projects/${P[0].id}`);
+  await n(client1, "WORK_SUBMITTED", { milestone: "Макет ва сохтор", project: prog.title }, order ? `/orders/${order.id}` : null);
+  await n(client1, "NEW_REVIEW", { name: dil.name, rating: 5 }, `/freelancers/${client1.id}`, true);
+  await n(dil, "PROPOSAL_ACCEPTED", { project: prog.title }, order ? `/orders/${order.id}` : null);
 }
 
 main().catch((e) => { console.error(e); process.exit(1); }).finally(() => prisma.$disconnect());

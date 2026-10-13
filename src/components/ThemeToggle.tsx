@@ -1,9 +1,11 @@
 "use client";
 
 import { Moon, Sun } from "lucide-react";
+import { useI18n } from "@/i18n/I18nProvider";
 import { useEffect, useState } from "react";
 
 export default function ThemeToggle() {
+  const { t } = useI18n();
   const [dark, setDark] = useState(false);
 
   useEffect(() => {
@@ -27,8 +29,8 @@ export default function ThemeToggle() {
       type="button"
       onClick={toggle}
       className="btn-ghost !p-2.5"
-      aria-label={dark ? "Режими равшан" : "Режими торик"}
-      title={dark ? "Режими равшан" : "Режими торик"}
+      aria-label={dark ? t.nav.light : t.nav.dark}
+      title={dark ? t.nav.light : t.nav.dark}
     >
       {dark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
     </button>

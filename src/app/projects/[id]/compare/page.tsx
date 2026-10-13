@@ -47,7 +47,7 @@ export default async function ComparePage({ params, searchParams }: { params: { 
             <tr><th scope="row" className="p-4 text-ink-muted">{t.cmp.skills}</th>{rows.map(({ p, skills }) => <td key={p.id} className="p-4"><div className="flex flex-wrap gap-1">{skills.slice(0, 8).map((s) => <span key={s} className="chip">{s}</span>)}</div></td>)}</tr>
             <tr><th scope="row" className="p-4 text-ink-muted">{t.cmp.portfolio}</th>{rows.map(({ p }) => <td key={p.id} className="p-4">{p.portfolioItems.length ? <ul className="list-disc pl-4">{p.portfolioItems.map((i) => <li key={i.id}>{i.link ? <a href={i.link} target="_blank" rel="noreferrer">{i.title}</a> : i.title}</li>)}</ul> : "—"}</td>)}</tr>
             <tr><th scope="row" className="p-4 align-top text-ink-muted">{t.cmp.letter}</th>{rows.map(({ p }) => <td key={p.id} className="whitespace-pre-line p-4 align-top text-ink-muted">{p.coverLetter}</td>)}</tr>
-            {project.status === "OPEN" && <tr><td />{rows.map(({ p }) => <td key={p.id} className="p-4">{p.status === "SENT" && <ActionButton url={`/api/projects/${project.id}/accept`} body={{ proposalId: p.id }} label={t.pd.hire} className="btn-primary w-full" confirm={t.pd.hireConfirm} testId={`cmp-hire-${p.id}`} redirect={(d) => (d.orderId ? `/orders/${d.orderId}` : null)} />}</td>)}</tr>}
+            {project.status === "OPEN" && <tr><td />{rows.map(({ p }) => <td key={p.id} className="p-4">{p.status === "SENT" && <ActionButton url={`/api/projects/${project.id}/accept`} body={{ proposalId: p.id }} label={t.pd.hire} className="btn-primary w-full" confirm={t.pd.hireConfirm} testId={`cmp-hire-${p.id}`} redirectTo={{ key: "orderId", prefix: "/orders/" }} />}</td>)}</tr>}
           </tbody>
         </table>
       </div>

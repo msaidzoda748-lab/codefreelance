@@ -11,10 +11,10 @@ import { TextArea, FormMessage } from "./Field";
  * Button that calls an API, optionally after a confirm dialog and/or a required text input (reason/comment).
  * On success refreshes the page (or navigates to `redirectTo` built from the response).
  */
-export default function ActionButton({ url, method = "POST", body = {}, label, className = "btn-secondary", confirm, prompt, promptMin = 3, extraCheckbox, redirect, children, testId }: {
+export default function ActionButton({ url, method = "POST", body = {}, label, className = "btn-secondary", confirm, prompt, promptMin = 3, extraCheckbox, redirectTo, children, testId }: {
   url: string; method?: string; body?: Record<string, unknown>; label: string; className?: string; confirm?: string;
   prompt?: { label: string; field: string }; promptMin?: number; extraCheckbox?: { label: string; field: string };
-  redirect?: (data: Record<string, unknown>) => string | null; children?: React.ReactNode; testId?: string;
+  redirectTo?: { key: string; prefix: string }; children?: React.ReactNode; testId?: string;
 }) {
   const { t } = useI18n();
   const router = useRouter();
@@ -30,7 +30,8 @@ export default function ActionButton({ url, method = "POST", body = {}, label, c
     setBusy(false);
     if (!r.ok) return setError(errorText(t, r.error));
     setOpen(false); setText("");
-    const to = redirect?.(r.data);
+    const v = redirectTo ? r.data[redirectTo.key] : null;
+    const to = v ? `${redirectTo!.prefix}${v}` : null;
     if (to) router.push(to);
     router.refresh();
   }

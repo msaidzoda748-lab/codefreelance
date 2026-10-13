@@ -41,7 +41,7 @@ export default function ProposalsOwnerList({ projectId, proposals, canHire }: { 
                   </label>
                 )}
                 {canHire && p.status === "SENT" && (
-                  <ActionButton url={`/api/projects/${projectId}/accept`} body={{ proposalId: p.id }} label={t.pd.hire} className="btn-primary ml-auto" confirm={fmt(t.pd.hireConfirm, { name: p.freelancer.name })} testId={`hire-${p.id}`} redirect={(d) => (d.orderId ? `/orders/${d.orderId}` : null)} />
+                  <ActionButton url={`/api/projects/${projectId}/accept`} body={{ proposalId: p.id }} label={t.pd.hire} className="btn-primary ml-auto" confirm={fmt(t.pd.hireConfirm, { name: p.freelancer.name })} testId={`hire-${p.id}`} redirectTo={{ key: "orderId", prefix: "/orders/" }} />
                 )}
               </div>
             </li>

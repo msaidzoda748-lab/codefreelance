@@ -6,7 +6,7 @@ import { useI18n } from "@/i18n/I18nProvider";
 import { useBookmarks } from "@/lib/bookmarks";
 import { somoniT, timeAgoT } from "@/lib/timeago";
 import { catKeyOf } from "@/data/categories";
-import { fmt } from "@/i18n/format";
+import { fmt, moneyRange } from "@/i18n/format";
 import ProposalModal from "./ProposalModal";
 import StatusBadge from "./StatusBadge";
 
@@ -48,7 +48,7 @@ export default function ProjectCard({ p, showStatus = false }: { p: ProjectCardD
         </div>
         <div className="mt-auto flex flex-wrap items-end justify-between gap-3 pt-4">
           <div>
-            <div className="text-lg font-extrabold text-brand-600">{p.budgetMin != null && p.budgetMax != null ? `${somoniT(p.budgetMin).replace(" сомонӣ", "")}–${somoniT(p.budgetMax)}` : somoniT(p.budget)}</div>
+            <div className="text-lg font-extrabold text-brand-600">{moneyRange(p, t)}</div>
             <div className="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-ink-muted">
               <span className="inline-flex items-center gap-1"><Clock className="h-3.5 w-3.5" /><span suppressHydrationWarning>{timeAgoT(p.createdAt, t)}</span></span>
               <span className="inline-flex items-center gap-1"><MapPin className="h-3.5 w-3.5" />{p.city}</span>

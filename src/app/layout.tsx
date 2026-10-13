@@ -1,3 +1,4 @@
+import { getDict } from "@/i18n/server";
 import type { Metadata, Viewport } from "next";
 import { Noto_Sans } from "next/font/google";
 import "./globals.css";
@@ -13,10 +14,10 @@ import { SITE } from "@/config/site";
 // Noto Sans: cyrillic-ext covers Tajik letters ғ ӣ қ ӯ ҳ ҷ
 const noto = Noto_Sans({ subsets: ["latin", "cyrillic", "cyrillic-ext"], weight: ["400", "500", "600", "700", "800"], variable: "--font-noto", display: "swap" });
 
-export const metadata: Metadata = {
-  title: { default: `${SITE.name} — Платформаи фриланс барои Тоҷикистон`, template: `%s | ${SITE.name}` },
-  description: `${SITE.name} — бозори фриланс барои мизоҷон ва мутахассисон дар Тоҷикистон.`,
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const t = getDict();
+  return { title: { default: `${SITE.name} — ${t.meta.title}`, template: `%s | ${SITE.name}` }, description: `${SITE.name} — ${t.meta.description}` };
+}
 export const viewport: Viewport = { width: "device-width", initialScale: 1, viewportFit: "cover", themeColor: "#059669" };
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
