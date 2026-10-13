@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Calendar, CheckCircle2, FileText, MessageCircle, Tag, Wallet } from "lucide-react";
+import { Calendar, CheckCircle2, FileText, MapPin, MessageCircle, Tag, Wallet } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { avgRating, getCurrentUser } from "@/lib/auth";
 import { formatDate, formatMoney, parseSkills, statusLabel } from "@/lib/utils";
@@ -58,7 +58,9 @@ export default async function ProjectDetailPage({
   return (
     <div className="space-y-6 animate-slide-up">
       <div className="card shadow-soft overflow-hidden !p-0">
-        <div className="bg-gradient-to-r from-brand-600/10 via-accent-500/10 to-transparent px-6 py-5 dark:from-brand-500/20 dark:via-accent-500/10">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src={project.coverUrl || "/img/covers/website.svg"} alt="" className="block h-56 w-full object-cover sm:h-64" />
+        <div className="px-6 py-5">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
               <h1 className="text-2xl font-extrabold tracking-tight sm:text-3xl">
@@ -93,6 +95,7 @@ export default async function ProjectDetailPage({
               <Tag className="h-4 w-4" />
               {project.category}
             </span>
+            <span className="inline-flex items-center gap-1.5 muted"><MapPin className="h-4 w-4" />{project.city}</span>
             <span className="inline-flex items-center gap-1.5 muted">
               <Calendar className="h-4 w-4" />
               {formatDate(project.deadline)}
@@ -227,7 +230,7 @@ export default async function ProjectDetailPage({
               <div key={r.id} className="card">
                 <div className="flex items-center justify-between gap-2">
                   <span className="inline-flex items-center gap-2 font-medium">
-                    <Avatar name={r.fromUser.name} size="sm" />
+                    <Avatar name={r.fromUser.name} src={r.fromUser.avatarUrl} size="sm" />
                     {r.fromUser.name} → {r.toUser.name}
                   </span>
                   <Stars value={r.rating} />

@@ -1,358 +1,151 @@
 import Link from "next/link";
 import {
-  ArrowRight,
-  Briefcase,
-  CheckCircle2,
-  Code2,
-  MessageSquare,
-  Palette,
-  PenLine,
-  Search,
-  Smartphone,
-  Sparkles,
-  Star,
-  Users,
+  ArrowRight, BarChart3, ChevronRight, Code2, FileText, Heart, Monitor,
+  Palette, Search, ShieldCheck, Sparkles, Users, BadgeCheck, MessageSquare, Briefcase,
 } from "lucide-react";
 import { prisma } from "@/lib/prisma";
-import { avgRating } from "@/lib/auth";
-import { CATEGORIES, formatMoney } from "@/lib/utils";
-import StatusBadge from "@/components/StatusBadge";
-import Stars from "@/components/Stars";
+import ProjectCard from "@/components/ProjectCard";
+import FreelancerRow from "@/components/FreelancerRow";
 import Avatar from "@/components/Avatar";
+import Stars from "@/components/Stars";
+import { avgRating } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
 
-const CAT_ICONS: Record<string, typeof Code2> = {
-  "Веб-таҳия": Code2,
-  Мобилӣ: Smartphone,
-  Дизайн: Palette,
-  Тарҷума: PenLine,
-  Маркетинг: Sparkles,
-  Навиштан: PenLine,
-  Дигар: Briefcase,
-};
+const CATS = [
+  { label: "Вебсайт", q: "Веб-таҳия", icon: Monitor, cls: "bg-brand-50 text-brand-800 hover:bg-brand-100", ic: "text-brand-600" },
+  { label: "Дизайн", q: "Дизайн", icon: Palette, cls: "bg-purple-50 text-purple-800 hover:bg-purple-100", ic: "text-purple-600" },
+  { label: "Барномасозӣ", q: "Мобилӣ", icon: Code2, cls: "bg-sky-50 text-sky-800 hover:bg-sky-100", ic: "text-sky-600" },
+  { label: "Маркетинг", q: "Маркетинг", icon: BarChart3, cls: "bg-orange-50 text-orange-800 hover:bg-orange-100", ic: "text-orange-500" },
+];
 
 export default async function HomePage() {
-  const [projects, freelancers, counts] = await Promise.all([
-    prisma.project.findMany({
-      where: { status: "OPEN" },
-      orderBy: { createdAt: "desc" },
-      take: 6,
-      include: { client: true, _count: { select: { proposals: true } } },
-    }),
-    prisma.freelancerProfile.findMany({
-      take: 4,
-      include: { user: { include: { reviewsRecv: true } } },
-      orderBy: { createdAt: "desc" },
-    }),
-    prisma.$transaction([
-      prisma.project.count({ where: { status: "OPEN" } }),
-      prisma.freelancerProfile.count(),
-      prisma.user.count({ where: { role: "CLIENT" } }),
-      prisma.review.count(),
-    ]),
+  const [projects, profiles, projectCount, freelancerCount, reviews] = await Promise.all([
+    prisma.project.findMany({ where: { status: "OPEN" }, orderBy: { createdAt: "desc" }, take: 4 }),
+    prisma.freelancerProfile.findMany({ include: { user: { include: { reviewsRecv: true } } } }),
+    prisma.project.count(),
+    prisma.freelancerProfile.count(),
+    prisma.review.findMany({ select: { rating: true } }),
   ]);
+  const top = profiles
+    .map((f) => ({ f, avg: avgRating(f.user.reviewsRecv) ?? 0, n: f.user.reviewsRecv.length }))
+    .sort((a, b) => b.avg - a.avg || b.n - a.n)
+    .slice(0, 3)
+    .map((x) => x.f);
+  const hero = top.find((f) => f.title.includes("UI")) || top[0];
+  const satisfied = reviews.length ? Math.round((reviews.filter((r) => r.rating >= 4).length / reviews.length) * 100) : 100;
 
   return (
-    <div className="space-y-16 pb-8">
-      {/* Hero */}
-      <section className="relative overflow-hidden rounded-3xl bg-hero-gradient px-6 py-14 text-white shadow-glow sm:px-12 sm:py-20">
-        <div className="pointer-events-none absolute inset-0 bg-mesh opacity-60" />
-        <div className="pointer-events-none absolute -right-20 -top-20 h-72 w-72 rounded-full bg-white/10 blur-3xl" />
-        <div className="pointer-events-none absolute -bottom-24 -left-16 h-64 w-64 rounded-full bg-violet-300/20 blur-3xl" />
-
-        <div className="relative mx-auto max-w-3xl text-center animate-slide-up">
-          <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-medium backdrop-blur">
-            <Sparkles className="h-3.5 w-3.5" />
-            Платформаи #1 фриланс барои Тоҷикистон
-          </div>
-          <h1 className="text-3xl font-extrabold tracking-tight sm:text-5xl sm:leading-tight">
-            Кор ва мутахассисони беҳтарин{" "}
-            <span className="text-violet-200">дар як ҷо</span>
+    <div className="-mt-8 space-y-14 pb-6">
+      {/* HERO */}
+      <section className="grid items-center gap-10 pt-8 lg:grid-cols-[1.15fr_1fr]">
+        <div className="animate-slide-up">
+          <span className="inline-flex items-center gap-2 rounded-full bg-purple-50 px-3.5 py-1.5 text-xs font-medium text-purple-700 ring-1 ring-purple-100">
+            <Sparkles className="h-3.5 w-3.5" /> Мутахассисони маҳаллӣ. Имкониятҳои ҷаҳонӣ.
+          </span>
+          <h1 className="mt-5 text-[38px] font-extrabold leading-[1.08] tracking-tight lg:text-[52px] xl:text-[58px]">
+            <span className="block text-navy-900 dark:text-white">Истеъдодро ёб.</span>
+            <span className="block text-brand-600">Лоиҳаатро амалӣ кун.</span>
           </h1>
-          <p className="mx-auto mt-4 max-w-xl text-base text-indigo-100 sm:text-lg">
-            CodeFreelance — лоиҳа эълон кунед, пешниҳод гиред, сӯҳбат кунед ва
-            бо эътимод ҳамкорӣ кунед.
+          <p className="mt-5 max-w-xl text-[17px] leading-relaxed text-slate-600 dark:text-slate-300">
+            CodeFreelance — платформаи боэътимод барои ёфтани фрилансерҳои моҳир ва амалӣ кардани лоиҳаҳо дар Тоҷикистон ва берун аз он.
           </p>
-
-          <form
-            action="/projects"
-            className="mx-auto mt-8 flex max-w-xl flex-col gap-2 rounded-2xl bg-white/15 p-2 shadow-soft backdrop-blur-xl sm:flex-row sm:items-center"
-          >
-            <div className="relative flex-1">
-              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/70" />
-              <input
-                name="q"
-                placeholder="Масалан: вебсайт, дизайн, Flutter..."
-                className="w-full rounded-xl border-0 bg-white/90 py-3 pl-10 pr-3 text-sm text-slate-900 placeholder:text-slate-400 outline-none focus:ring-2 focus:ring-white/50"
-              />
-            </div>
-            <button type="submit" className="btn bg-slate-900 text-white hover:bg-slate-800 sm:shrink-0">
-              Ҷустуҷӯ
-            </button>
+          <form action="/projects" className="mt-7 flex max-w-xl items-center gap-2 rounded-2xl border border-slate-200 bg-white p-2 shadow-soft dark:border-slate-700 dark:bg-slate-900">
+            <Search className="ml-3 h-5 w-5 shrink-0 text-slate-400" />
+            <input name="q" placeholder="Чӣ гуна лоиҳаро меҷӯед? (масалан: вебсайт, дизайн, маркетинг...)" className="min-w-0 flex-1 bg-transparent px-2 py-3 text-sm text-navy-900 outline-none placeholder:text-slate-400 dark:text-white" />
+            <button className="btn-primary !px-6 !py-3"><Search className="h-4 w-4" />Ҷустуҷӯ</button>
           </form>
+          <div className="mt-5 flex flex-wrap gap-3">
+            {CATS.map((c) => (
+              <Link key={c.label} href={`/projects?category=${encodeURIComponent(c.q)}`} className={`inline-flex items-center gap-2 rounded-xl px-5 py-3 text-sm font-medium no-underline transition ${c.cls}`}>
+                <c.icon className={`h-4 w-4 ${c.ic}`} />{c.label}
+              </Link>
+            ))}
+          </div>
+        </div>
 
-          <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
-            <Link
-              href="/projects"
-              className="btn bg-white text-brand-800 no-underline hover:bg-indigo-50"
-            >
-              Дидани лоиҳаҳо
-              <ArrowRight className="h-4 w-4" />
+        <div className="relative mx-auto w-full max-w-[600px]">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/img/hero-sculpture.svg" alt="" className="w-full rounded-[28px]" />
+          {hero && (
+            <Link href={`/freelancers/${hero.userId}`} className="float-card absolute left-0 top-6 flex w-[230px] gap-3 no-underline text-inherit sm:-left-6">
+              <div className="relative h-16 w-16 shrink-0 self-start">
+                <Avatar name={hero.user.name} src={hero.user.avatarUrl} size="lg" />
+                <span className="absolute bottom-0.5 right-0.5 h-3 w-3 rounded-full bg-brand-500 ring-2 ring-white" />
+              </div>
+              <div className="min-w-0">
+                <div className="text-sm font-bold text-navy-900">{hero.user.name}</div>
+                <div className="text-xs text-slate-500">{hero.title}</div>
+                <Stars value={avgRating(hero.user.reviewsRecv)} />
+                <span className="mt-1 inline-flex items-center gap-1 rounded-full bg-brand-50 px-2 py-0.5 text-[10px] font-semibold text-brand-700"><BadgeCheck className="h-3 w-3" />Дастрас аст</span>
+              </div>
             </Link>
-            <Link
-              href="/register"
-              className="btn border border-white/40 bg-white/10 text-white no-underline backdrop-blur hover:bg-white/20"
-            >
-              Ройгон оғоз кунед
-            </Link>
+          )}
+          <div className="float-card absolute right-0 top-8 hidden items-center gap-2.5 sm:flex sm:-right-4">
+            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand-50 text-brand-600"><BarChart3 className="h-4 w-4" /></span>
+            <div className="text-xs leading-tight"><div className="font-semibold text-navy-900">Сифати баланд</div><div className="text-slate-500">Натиҷаи воқеӣ</div></div>
+          </div>
+          <div className="float-card absolute bottom-24 right-0 hidden items-center gap-2.5 sm:flex sm:-right-4">
+            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand-50 text-brand-600"><Users className="h-4 w-4" /></span>
+            <div className="text-xs leading-tight font-semibold text-navy-900">Фрилансерҳои<br />боэътимод</div>
           </div>
         </div>
       </section>
 
-      {/* Stats */}
-      <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      {/* FEATURED + SIDEBAR */}
+      <section className="grid gap-8 lg:grid-cols-[1fr_400px]">
+        <div>
+          <div className="mb-5 flex items-center justify-between">
+            <h2 className="section-title flex items-center gap-3">Лоиҳаҳои интихобӣ <span className="rounded-full bg-slate-100 p-1.5 dark:bg-slate-800"><ChevronRight className="h-4 w-4" /></span></h2>
+            <Link href="/projects" className="inline-flex items-center gap-1 text-sm font-semibold text-navy-800 no-underline hover:text-brand-600">Ҳама лоиҳаҳо <ArrowRight className="h-4 w-4" /></Link>
+          </div>
+          <div className="grid gap-5 md:grid-cols-2">
+            {projects.map((p) => <ProjectCard key={p.id} p={p} />)}
+          </div>
+        </div>
+        <aside className="rounded-2xl border border-slate-200/80 bg-slate-50/60 p-4 dark:border-slate-800 dark:bg-slate-900/50">
+          <div className="mb-4 flex items-center justify-between px-1">
+            <h2 className="text-base font-extrabold text-navy-900 dark:text-white">Фрилансерҳои беҳтарин</h2>
+            <Link href="/freelancers" className="inline-flex items-center gap-1 text-xs font-semibold text-navy-800 no-underline hover:text-brand-600">Ҳама фрилансерҳо <ArrowRight className="h-3.5 w-3.5" /></Link>
+          </div>
+          <div className="space-y-3">{top.map((f) => <FreelancerRow key={f.id} f={f} />)}</div>
+        </aside>
+      </section>
+
+      {/* HOW */}
+      <section id="how" className="scroll-mt-24">
+        <h2 className="section-title text-center">Чӣ тавр кор мекунад?</h2>
+        <div className="mt-8 grid gap-5 sm:grid-cols-3">
+          {[
+            { t: "Лоиҳаро ҷойгир кунед", d: "Тавсиф, буҷет ва мӯҳлатро нависед — ройгон.", i: Briefcase },
+            { t: "Пешниҳодҳо гиред", d: "Фрилансерҳои санҷидашуда нарх ва мӯҳлат пешниҳод мекунанд.", i: FileText },
+            { t: "Ҳамкорӣ ва баҳо", d: "Дар чат кор кунед, лоиҳаро анҷом диҳед ва баҳо гузоред.", i: MessageSquare },
+          ].map((s, i) => (
+            <div key={s.t} className="card text-center">
+              <span className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-brand-50 text-brand-600"><s.i className="h-5 w-5" /></span>
+              <div className="mt-3 text-xs font-bold uppercase tracking-widest text-brand-600">Қадами {i + 1}</div>
+              <h3 className="mt-1 font-bold text-navy-900 dark:text-white">{s.t}</h3>
+              <p className="mt-1 text-sm muted">{s.d}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* STATS BAR */}
+      <section className="grid gap-6 rounded-2xl border border-slate-200/80 bg-white px-6 py-6 shadow-card dark:border-slate-800 dark:bg-slate-900 sm:grid-cols-2 lg:grid-cols-4 lg:divide-x lg:divide-slate-100">
         {[
-          { label: "Лоиҳаи кушода", value: counts[0], icon: Briefcase },
-          { label: "Фрилансер", value: counts[1], icon: Users },
-          { label: "Мизоҷ", value: counts[2], icon: Sparkles },
-          { label: "Баҳоҳо", value: counts[3], icon: Star },
+          { v: `${projectCount}+`, l: "Лоиҳаҳои ҷойгиршуда", i: FileText },
+          { v: `${freelancerCount}+`, l: "Фрилансерҳои мутахассис", i: Users },
+          { v: `${satisfied}%`, l: "Мизоҷони қаноатманд", i: ShieldCheck },
         ].map((s) => (
-          <div key={s.label} className="card flex items-center gap-4">
-            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-brand-500/15 to-accent-500/15 text-brand-600 dark:text-brand-300">
-              <s.icon className="h-5 w-5" />
-            </div>
-            <div>
-              <div className="text-2xl font-extrabold tracking-tight">
-                {s.value}
-              </div>
-              <div className="text-sm muted">{s.label}</div>
-            </div>
+          <div key={s.l} className="flex items-center gap-4 lg:px-4">
+            <s.i className="h-9 w-9 text-brand-600" strokeWidth={1.6} />
+            <div><div className="text-2xl font-extrabold text-navy-900 dark:text-white">{s.v}</div><div className="text-sm muted">{s.l}</div></div>
           </div>
         ))}
-      </section>
-
-      {/* Categories */}
-      <section>
-        <div className="mb-6 flex items-end justify-between gap-4">
-          <div>
-            <h2 className="section-title">Категорияҳо</h2>
-            <p className="mt-1 text-sm muted">
-              Соҳаи кори худро интихоб кунед
-            </p>
-          </div>
-        </div>
-        <div className="grid gap-3 grid-cols-2 sm:grid-cols-3 lg:grid-cols-4">
-          {CATEGORIES.map((c) => {
-            const Icon = CAT_ICONS[c] || Briefcase;
-            return (
-              <Link
-                key={c}
-                href={`/projects?category=${encodeURIComponent(c)}`}
-                className="card-hover group flex flex-col items-start gap-3 no-underline text-inherit"
-              >
-                <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-50 text-brand-600 transition group-hover:bg-brand-600 group-hover:text-white dark:bg-brand-500/15 dark:text-brand-300">
-                  <Icon className="h-5 w-5" />
-                </span>
-                <span className="font-semibold">{c}</span>
-              </Link>
-            );
-          })}
-        </div>
-      </section>
-
-      {/* How it works */}
-      <section className="rounded-3xl border border-slate-200/80 bg-gradient-to-b from-white to-slate-50 p-8 shadow-card dark:border-slate-700/60 dark:from-slate-900 dark:to-slate-950 sm:p-10">
-        <h2 className="section-title text-center">Чӣ тавр кор мекунад?</h2>
-        <p className="mx-auto mt-2 max-w-lg text-center text-sm muted">
-          Се қадами оддӣ то оғози ҳамкорӣ
-        </p>
-        <div className="mt-10 grid gap-6 sm:grid-cols-3">
-          {[
-            {
-              step: "01",
-              title: "Сабти ном",
-              desc: "Ҳамчун мизоҷ ё фрилансер ба қайд гиред — ройгон ва зуд.",
-              icon: Users,
-            },
-            {
-              step: "02",
-              title: "Лоиҳа ё пешниҳод",
-              desc: "Лоиҳа эълон кунед ё ба лоиҳаҳои кушода пешниҳод диҳед.",
-              icon: Briefcase,
-            },
-            {
-              step: "03",
-              title: "Чат ва анҷом",
-              desc: "Ҳамкорӣ кунед, чат кунед ва пас аз анҷом баҳо диҳед.",
-              icon: MessageSquare,
-            },
-          ].map((item) => (
-            <div key={item.step} className="relative text-center">
-              <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-brand-600 to-accent-500 text-white shadow-soft">
-                <item.icon className="h-6 w-6" />
-              </div>
-              <div className="mt-2 text-xs font-bold uppercase tracking-widest text-brand-500">
-                Қадами {item.step}
-              </div>
-              <h3 className="mt-1 text-lg font-bold">{item.title}</h3>
-              <p className="mt-2 text-sm muted">{item.desc}</p>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* Projects */}
-      <section>
-        <div className="mb-6 flex items-center justify-between">
-          <div>
-            <h2 className="section-title">Лоиҳаҳои кушода</h2>
-            <p className="mt-1 text-sm muted">Имкониятҳои навтарин</p>
-          </div>
-          <Link
-            href="/projects"
-            className="btn-ghost no-underline text-brand-600"
-          >
-            Ҳама <ArrowRight className="h-4 w-4" />
-          </Link>
-        </div>
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {projects.map((p) => (
-            <Link
-              key={p.id}
-              href={`/projects/${p.id}`}
-              className="card-hover block no-underline text-inherit"
-            >
-              <div className="mb-3 flex items-start justify-between gap-2">
-                <h3 className="font-bold leading-snug text-slate-900 dark:text-white">
-                  {p.title}
-                </h3>
-                <StatusBadge status={p.status} />
-              </div>
-              <p className="line-clamp-2 text-sm muted">{p.description}</p>
-              <div className="mt-4 flex items-center justify-between border-t border-slate-100 pt-3 text-sm dark:border-slate-800">
-                <span className="font-bold text-brand-600 dark:text-brand-300">
-                  {formatMoney(p.budget)}
-                </span>
-                <span className="muted">{p.category}</span>
-              </div>
-            </Link>
-          ))}
-        </div>
-      </section>
-
-      {/* Freelancers */}
-      <section>
-        <div className="mb-6 flex items-center justify-between">
-          <div>
-            <h2 className="section-title">Фрилансерҳои барҷаста</h2>
-            <p className="mt-1 text-sm muted">Мутахассисони тайёр ба кор</p>
-          </div>
-          <Link
-            href="/freelancers"
-            className="btn-ghost no-underline text-brand-600"
-          >
-            Ҳама <ArrowRight className="h-4 w-4" />
-          </Link>
-        </div>
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {freelancers.map((f) => (
-            <Link
-              key={f.id}
-              href={`/freelancers/${f.userId}`}
-              className="card-hover block no-underline text-inherit"
-            >
-              <div className="flex items-center gap-3">
-                <Avatar name={f.user.name} src={f.user.avatarUrl} />
-                <div>
-                  <div className="font-bold">{f.user.name}</div>
-                  <div className="text-sm text-brand-600 dark:text-brand-300">
-                    {f.title}
-                  </div>
-                </div>
-              </div>
-              <div className="mt-3">
-                <Stars
-                  value={avgRating(f.user.reviewsRecv)}
-                  count={f.user.reviewsRecv.length}
-                />
-              </div>
-              <div className="mt-2 text-sm font-semibold text-slate-700 dark:text-slate-200">
-                {f.hourlyRate} сом/соат
-              </div>
-            </Link>
-          ))}
-        </div>
-      </section>
-
-      {/* Testimonials */}
-      <section>
-        <h2 className="section-title text-center">Фикрҳои корбарон</h2>
-        <p className="mx-auto mt-2 max-w-lg text-center text-sm muted">
-          Чӣ мегӯянд мизоҷон ва фрилансерҳо
-        </p>
-        <div className="mt-8 grid gap-4 md:grid-cols-3">
-          {[
-            {
-              name: "Заррина Қаюмова",
-              role: "Мизоҷ",
-              text: "Зуд фрилансери хуб ёфтам. Чат ва баҳогузорӣ хеле қулай аст.",
-            },
-            {
-              name: "Дилшод Неъматов",
-              role: "Фрилансер",
-              text: "Лоиҳаҳои воқеӣ ва интерфейси зебо. Барои Тоҷикистон идеалӣ!",
-            },
-            {
-              name: "Мадина Саидова",
-              role: "Дизайнер",
-              text: "Профил ва портфолио маро ба мизоҷони нав пайваст кард.",
-            },
-          ].map((t) => (
-            <div key={t.name} className="card relative overflow-hidden">
-              <div className="absolute -right-2 -top-2 text-6xl font-serif text-brand-100 dark:text-brand-900/40">
-                “
-              </div>
-              <div className="mb-3 flex gap-0.5 text-amber-400">
-                {[1, 2, 3, 4, 5].map((i) => (
-                  <Star key={i} className="h-4 w-4 fill-current" />
-                ))}
-              </div>
-              <p className="relative text-sm leading-relaxed text-slate-600 dark:text-slate-300">
-                {t.text}
-              </p>
-              <div className="mt-4 flex items-center gap-3 border-t border-slate-100 pt-4 dark:border-slate-800">
-                <Avatar name={t.name} size="sm" />
-                <div>
-                  <div className="text-sm font-semibold">{t.name}</div>
-                  <div className="text-xs muted">{t.role}</div>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* CTA */}
-      <section className="overflow-hidden rounded-3xl bg-slate-900 px-8 py-12 text-center text-white shadow-card dark:bg-gradient-to-br dark:from-brand-950 dark:to-slate-950 sm:px-12">
-        <CheckCircle2 className="mx-auto h-10 w-10 text-brand-400" />
-        <h2 className="mt-4 text-2xl font-extrabold sm:text-3xl">
-          Омодаед оғоз кунед?
-        </h2>
-        <p className="mx-auto mt-2 max-w-md text-sm text-slate-300">
-          Имрӯз ба CodeFreelance ҳамроҳ шавед ва аввалин лоиҳаи худро пайдо
-          кунед.
-        </p>
-        <div className="mt-6 flex flex-wrap justify-center gap-3">
-          <Link href="/register" className="btn-primary no-underline">
-            Сабти ном
-          </Link>
-          <Link
-            href="/projects"
-            className="btn border border-white/20 bg-white/5 text-white no-underline hover:bg-white/10"
-          >
-            Лоиҳаҳоро дидан
-          </Link>
+        <div className="flex items-center gap-3 lg:px-6">
+          <Heart className="h-6 w-6 shrink-0 fill-rose-500 text-rose-500" />
+          <p className="text-sm text-slate-600 dark:text-slate-300">Барои рушди имкониятҳо дар Тоҷикистон ва берун аз он.</p>
         </div>
       </section>
     </div>

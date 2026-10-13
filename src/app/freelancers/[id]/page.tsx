@@ -36,7 +36,7 @@ export default async function FreelancerProfilePage({
       <div className="card shadow-soft overflow-hidden !p-0">
         <div className="h-28 bg-hero-gradient" />
         <div className="relative px-6 pb-6">
-          <div className="-mt-10 flex flex-wrap items-end justify-between gap-4">
+          <div className="-mt-10 flex flex-wrap items-end justify-between gap-4 [&_h1]:mt-12">
             <div className="flex items-end gap-4">
               <div className="rounded-full ring-4 ring-white dark:ring-slate-900">
                 <Avatar name={user.name} src={user.avatarUrl} size="lg" />
@@ -47,7 +47,7 @@ export default async function FreelancerProfilePage({
               </div>
             </div>
             <div className="rounded-2xl bg-brand-50 px-4 py-2 text-sm font-bold text-brand-700 dark:bg-brand-500/15 dark:text-brand-200">
-              {p.hourlyRate} сом/соат
+              {p.hourlyRate} сомонӣ/соат
             </div>
           </div>
           <div className="mt-4">
@@ -99,7 +99,7 @@ export default async function FreelancerProfilePage({
             <div key={r.id} className="card">
               <div className="flex items-center justify-between gap-2">
                 <span className="inline-flex items-center gap-2 font-medium">
-                  <Avatar name={r.fromUser.name} size="sm" />
+                  <Avatar name={r.fromUser.name} src={r.fromUser.avatarUrl} size="sm" />
                   {r.fromUser.name}
                 </span>
                 <Stars value={r.rating} />

@@ -154,7 +154,7 @@ export default function ChatBox({
               <div
                 className={`max-w-[75%] rounded-2xl px-3.5 py-2.5 text-sm shadow-sm ${
                   mine
-                    ? "rounded-br-md bg-gradient-to-br from-brand-600 to-accent-600 text-white"
+                    ? "rounded-br-md bg-gradient-to-br from-brand-600 to-brand-600 text-white"
                     : "rounded-bl-md border border-slate-200/80 bg-white text-slate-800 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
                 }`}
               >
@@ -198,7 +198,7 @@ export default function ChatBox({
                 )}
                 <div
                   className={`mt-1 flex items-center gap-2 text-[10px] ${
-                    mine ? "text-indigo-100" : "text-slate-400"
+                    mine ? "text-brand-100" : "text-slate-400"
                   }`}
                 >
                   <span>{new Date(m.createdAt).toLocaleString("tg-TJ")}</span>

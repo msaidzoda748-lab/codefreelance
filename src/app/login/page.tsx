@@ -36,7 +36,7 @@ export default function LoginPage() {
   return (
     <div className="mx-auto grid max-w-md animate-slide-up gap-6">
       <div className="text-center">
-        <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-brand-600 to-accent-500 text-white shadow-soft">
+        <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-brand-600 to-brand-500 text-white shadow-soft">
           <Briefcase className="h-5 w-5" />
         </div>
         <h1 className="text-2xl font-extrabold tracking-tight">

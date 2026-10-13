@@ -25,13 +25,13 @@ export default function Avatar({
       <img
         src={src}
         alt={name}
-        className={`${sizeCls} shrink-0 rounded-full object-cover shadow-sm ring-2 ring-white dark:ring-slate-900`}
+        className={`block ${sizeCls} shrink-0 rounded-full object-cover shadow-sm ring-2 ring-white dark:ring-slate-900`}
       />
     );
   }
   return (
     <div
-      className={`inline-flex ${sizeCls} shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-brand-500 to-accent-500 font-bold text-white shadow-sm`}
+      className={`inline-flex ${sizeCls} shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-brand-500 to-brand-500 font-bold text-white shadow-sm`}
     >
       {initials || "?"}
     </div>

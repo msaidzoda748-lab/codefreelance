@@ -1,70 +1,28 @@
 import { chromium } from "playwright-core";
 import fs from "fs";
 import path from "path";
-
-const BASE = "http://localhost:3000";
+const BASE = process.env.BASE || "http://localhost:3000";
 const OUT = path.resolve("screenshots");
 fs.mkdirSync(OUT, { recursive: true });
-
-const browser = await chromium.launch({
-  executablePath: "/usr/bin/google-chrome",
-  headless: true,
-  args: ["--no-sandbox", "--disable-dev-shm-usage"],
-});
-
-async function shot(page, name) {
-  const p = path.join(OUT, name);
-  await page.screenshot({ path: p, fullPage: true });
-  console.log("saved", p);
-}
-
-const context = await browser.newContext({
-  viewport: { width: 1280, height: 800 },
-  locale: "tg-TJ",
-});
-const page = await context.newPage();
-
-await page.goto(BASE + "/login", { waitUntil: "load", timeout: 60000 });
-await page.fill('input[name="email"]', "client@demo.tj");
-await page.fill('input[name="password"]', "password123");
-await page.click('button[type="submit"]');
-await page.waitForURL("**/", { timeout: 30000 }).catch(() => {});
-await page.waitForTimeout(1500);
-
-await page.goto(BASE + "/notifications", { waitUntil: "load", timeout: 60000 });
-await page.waitForTimeout(1500);
-await shot(page, "07-notifications.png");
-
-// Bell dropdown overlay shot
-await page.goto(BASE + "/", { waitUntil: "load", timeout: 60000 });
-await page.waitForTimeout(1000);
-const bell = page.locator('button[aria-label="Огоҳиҳо"]');
-if (await bell.count()) {
-  await bell.click();
-  await page.waitForTimeout(600);
-  await page.screenshot({
-    path: path.join(OUT, "07-notifications.png"),
-    fullPage: false,
-  });
-  console.log("saved bell dropdown as 07");
-}
-
-await page.goto(BASE + "/projects", { waitUntil: "load", timeout: 60000 });
-await page.waitForTimeout(800);
-const cards = page.locator('a[href^="/projects/"]');
-const n = await cards.count();
-let chat = null;
-for (let i = 0; i < n; i++) {
-  const text = await cards.nth(i).innerText();
-  if (text.includes("Даштборд")) {
-    chat = await cards.nth(i).getAttribute("href");
-    break;
-  }
-}
-if (!chat) chat = await cards.first().getAttribute("href");
-await page.goto(BASE + chat + "/chat", { waitUntil: "load", timeout: 60000 });
-await page.waitForTimeout(2500);
-await shot(page, "08-chat-attachments.png");
-
-await browser.close();
-console.log("done");
+const b = await chromium.launch({ executablePath: "/usr/bin/google-chrome", headless: true, args: ["--no-sandbox", "--disable-dev-shm-usage"] });
+const go = async (p, u) => { await p.goto(BASE + u, { waitUntil: "load", timeout: 60000 }); await p.waitForTimeout(1500); };
+const shot = async (p, n, full = true) => { await p.screenshot({ path: path.join(OUT, n), fullPage: full }); console.log("saved", n); };
+const ctx = await b.newContext({ viewport: { width: 1440, height: 900 }, locale: "tg-TJ" });
+const p = await ctx.newPage();
+await go(p, "/"); await shot(p, "01-home.png");
+await go(p, "/projects"); await shot(p, "02-projects-list.png");
+await go(p, "/login");
+await p.fill('input[name="email"]', "client@demo.tj"); await p.fill('input[name="password"]', "password123");
+await p.click('button[type="submit"]'); await p.waitForTimeout(2500);
+await go(p, "/projects?q=автосалон");
+await go(p, await p.locator('a[href^="/projects/c"]').first().getAttribute("href")); await shot(p, "03-project-detail-proposals.png");
+await go(p, "/freelancers");
+await go(p, await p.locator('a[href^="/freelancers/"]').first().getAttribute("href")); await shot(p, "04-freelancer-profile.png");
+await go(p, "/projects?status=IN_PROGRESS");
+const chat = (await p.locator('a[href^="/projects/c"]').first().getAttribute("href")) + "/chat";
+await go(p, chat); await shot(p, "05-chat.png");
+await go(p, "/"); await p.locator('button[aria-label="Огоҳиҳо"]').click(); await p.waitForTimeout(800); await shot(p, "07-notifications.png", false);
+await go(p, chat); await p.waitForTimeout(1000); await shot(p, "08-chat-attachments.png");
+const m = await b.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
+const mp = await m.newPage(); await go(mp, "/"); await shot(mp, "06-home-mobile.png");
+await b.close();

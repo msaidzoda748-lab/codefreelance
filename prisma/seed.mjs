@@ -1,353 +1,107 @@
 import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
-import { mkdir, writeFile } from "fs/promises";
-import path from "path";
 
 const prisma = new PrismaClient();
-
-async function tinyPng(relPath) {
-  // 1x1 PNG
-  const b64 =
-    "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==";
-  const full = path.join(process.cwd(), "public", relPath);
-  await mkdir(path.dirname(full), { recursive: true });
-  await writeFile(full, Buffer.from(b64, "base64"));
-  return "/" + relPath.replace(/\\/g, "/");
-}
+const day = 86400000;
+const ago = (d, h = 0) => new Date(Date.now() - d * day - h * 3600000);
+const A = (n) => `/img/avatars/${n}.svg`;
+const C = (n) => `/img/covers/${n}.svg`;
 
 async function main() {
-  await prisma.notification.deleteMany();
-  await prisma.attachment.deleteMany();
-  await prisma.review.deleteMany();
-  await prisma.message.deleteMany();
-  await prisma.proposal.deleteMany();
-  await prisma.project.deleteMany();
-  await prisma.freelancerProfile.deleteMany();
-  await prisma.session.deleteMany();
-  await prisma.user.deleteMany();
-
+  for (const m of ["notification", "attachment", "review", "message", "proposal", "project", "freelancerProfile", "session", "user"]) {
+    await prisma[m].deleteMany();
+  }
   const passwordHash = await bcrypt.hash("password123", 10);
-  const avatar1 = await tinyPng("uploads/avatars/seed-freelancer.png");
-  const avatar2 = await tinyPng("uploads/avatars/seed-designer.png");
-  const projAtt = await tinyPng("uploads/projects/seed-brief.png");
-  const chatImg = await tinyPng("uploads/chat/seed-mock.png");
 
-  const client1 = await prisma.user.create({
-    data: {
-      email: "client@demo.tj",
-      passwordHash,
-      name: "Алишер Раҳимов",
-      role: "CLIENT",
-    },
-  });
-  const client2 = await prisma.user.create({
-    data: {
-      email: "client2@demo.tj",
-      passwordHash,
-      name: "Заррина Қаюмова",
-      role: "CLIENT",
-    },
-  });
+  const client1 = await prisma.user.create({ data: { email: "client@demo.tj", passwordHash, name: "Алишер Раҳимов", role: "CLIENT", avatarUrl: A("alisher"), city: "Душанбе" } });
+  const client2 = await prisma.user.create({ data: { email: "client2@demo.tj", passwordHash, name: "Заррина Қаюмова", role: "CLIENT", avatarUrl: A("zarrina"), city: "Хуҷанд" } });
 
-  const freelancers = [];
-  const freelData = [
-    {
-      email: "freelancer@demo.tj",
-      name: "Дилшод Неъматов",
-      title: "Таҳиягари Full-Stack",
-      bio: "5 сол таҷриба дар Next.js, React ва Node.js.",
-      skills: "React,Next.js,TypeScript,Node.js,PostgreSQL",
-      hourlyRate: 25,
-      portfolio: "https://github.com/demo\nhttps://dilshod.dev",
-      avatarUrl: avatar1,
-    },
-    {
-      email: "designer@demo.tj",
-      name: "Мадина Саидова",
-      title: "Дизайнери UI/UX",
-      bio: "Дизайни интерфейсҳои зебо барои веб ва мобилӣ.",
-      skills: "Figma,UI/UX,Adobe XD,Illustration",
-      hourlyRate: 20,
-      portfolio: "https://behance.net/demo",
-      avatarUrl: avatar2,
-    },
-    {
-      email: "mobile@demo.tj",
-      name: "Ҷамшед Ҳакимов",
-      title: "Таҳиягари мобилӣ",
-      bio: "Flutter ва React Native.",
-      skills: "Flutter,React Native,Dart,Firebase",
-      hourlyRate: 22,
-      portfolio: "https://github.com/jamshid",
-    },
+  const fdata = [
+    ["freelancer@demo.tj", "Дилшод Неъматов", "Full Stack Developer", "dilshod", "Душанбе", "React,Node.js,MongoDB,Next.js,PostgreSQL", 120, "5 сол таҷриба дар сохтани вебсайтҳо ва барномаҳои веб барои ширкатҳои Тоҷикистон ва берун аз он."],
+    ["designer@demo.tj", "Мадина Саидова", "UI/UX дизайнер", "madina", "Душанбе", "Figma,UI/UX,Mobile App,Prototyping", 100, "Дизайни интерфейсҳои зебо ва қулай барои веб ва мобилӣ."],
+    ["marketing@demo.tj", "Сомон Иброҳимов", "Маркетинг мутахассис", "somon", "Хуҷанд", "SMM,Content,Strategy,Ads", 80, "Стратегияи SMM ва рекламаи рақамӣ барои брендҳои маҳаллӣ."],
+    ["mobile@demo.tj", "Ҷамшед Ҳакимов", "Таҳиягари мобилӣ", "jamshed", "Бохтар", "Flutter,React Native,Dart,Firebase", 110, "Барномаҳои iOS ва Android бо Flutter ва React Native."],
+    ["translator@demo.tj", "Нигора Юсуфӣ", "Тарҷумон", "nigora", "Кӯлоб", "Тарҷума,Тоҷикӣ,Русӣ,Англисӣ", 60, "Тарҷумаи касбӣ: тоҷикӣ, русӣ, англисӣ."],
+    ["brand@demo.tj", "Фарангис Раҷабова", "Графикӣ дизайнер", "farangis", "Истаравшан", "Illustrator,Branding,Logo", 90, "Логотип, брендбук ва иллюстратсия."],
   ];
-
-  for (const f of freelData) {
-    const u = await prisma.user.create({
-      data: {
-        email: f.email,
-        passwordHash,
-        name: f.name,
-        role: "FREELANCER",
-        avatarUrl: f.avatarUrl || null,
-        profile: {
-          create: {
-            title: f.title,
-            bio: f.bio,
-            skills: f.skills,
-            hourlyRate: f.hourlyRate,
-            portfolio: f.portfolio,
-          },
-        },
-      },
+  const F = {};
+  for (const [email, name, title, av, city, skills, rate, bio] of fdata) {
+    F[email] = await prisma.user.create({
+      data: { email, passwordHash, name, role: "FREELANCER", avatarUrl: A(av), city,
+        profile: { create: { title, bio, skills, hourlyRate: rate, portfolio: `https://github.com/${av}\nhttps://behance.net/${av}` } } },
     });
-    freelancers.push(u);
   }
 
-  const in30 = new Date(Date.now() + 30 * 86400000);
-  const in45 = new Date(Date.now() + 45 * 86400000);
-  const in20 = new Date(Date.now() + 20 * 86400000);
+  const open = [
+    [client1, "Сохтани вебсайти автосалон", "Барои автосалони нав вебсайти муосир бо каталоги мошинҳо, филтр ва имкони дархости санҷиши ронандагӣ лозим аст.", "Веб-таҳия", "React,UI/UX,Figma,Next.js,Tailwind", 2500, "website", "Душанбе", 20],
+    [client2, "Дизайни барномаи мобилӣ", "Лозим аст дизайни барномаи мобилӣ (iOS/Android) барои платформаи хизматрасонӣ. Дизайни муосир, содда ва ба истифодабаранда қулай.", "Дизайн", "UI/UX,Figma,Mobile App,Prototyping", 1800, "mobile", "Душанбе", 72],
+    [client1, "Логотип ва брендбук барои стартап", "Логотипи нав ва дастури бренд барои стартапи технологӣ: рангҳо, типография ва намунаҳо.", "Дизайн", "Illustrator,Branding,Logo", 900, "logo", "Хуҷанд", 30],
+    [client2, "Барномаи фармоиши ғизо", "Барномаи Flutter барои фармоиш ва расонидани ғизо дар Хуҷанд: меню, сабад, пайгирӣ.", "Мобилӣ", "Flutter,Firebase,Dart,API", 4000, "food", "Хуҷанд", 5],
+  ];
+  const P = [];
+  for (const [cl, title, description, category, skills, budget, cover, city, hrs] of open) {
+    P.push(await prisma.project.create({ data: { clientId: cl.id, title, description, category, skills, budget, coverUrl: C(cover), city,
+      deadline: new Date(Date.now() + 30 * day), createdAt: ago(0, hrs) } }));
+  }
+  await prisma.attachment.create({ data: { uploaderId: client1.id, projectId: P[0].id, url: C("website"), name: "brief-autosalon.svg", mimeType: "image/svg+xml", size: 2048 } });
 
-  const p1 = await prisma.project.create({
-    data: {
-      clientId: client1.id,
-      title: "Вебсайти ширкати тиҷоратӣ",
-      description:
-        "Вебсайти муосир: саҳифаи асосӣ, каталог, шакли тамос ва блог.",
-      category: "Веб-таҳия",
-      skills: "Next.js,React,Tailwind",
-      budget: 2500,
-      deadline: in30,
-      status: "OPEN",
-      attachments: {
-        create: {
-          uploaderId: client1.id,
-          url: projAtt,
-          name: "brief.png",
-          mimeType: "image/png",
-          size: 70,
-        },
-      },
-    },
-  });
+  const prop = async (p, f, letter, price, days, status = "PENDING") =>
+    prisma.proposal.create({ data: { projectId: p.id, freelancerId: F[f].id, coverLetter: letter, price, deliveryDays: days, status } });
+  await prop(P[0], "freelancer@demo.tj", "Салом! Ман 5 сол таҷриба дар Next.js дорам. MVP-ро дар 3 ҳафта супорида метавонам.", 2300, 21);
+  await prop(P[0], "designer@demo.tj", "Дизайни UI/UX-и сайтро дар Figma омода мекунам ва бо таҳиягар ҳамкорӣ мекунам.", 900, 14);
+  await prop(P[1], "designer@demo.tj", "Дизайни барномаҳои мобилӣ кори асосии ман аст. 3 варианти аввалия пешниҳод мекунам.", 1700, 18);
+  await prop(P[2], "brand@demo.tj", "Логотип ва брендбук — соҳаи ман. Дар 10 рӯз тайёр мекунам.", 850, 10);
 
-  await prisma.project.create({
-    data: {
-      clientId: client1.id,
-      title: "Дизайни логотип ва брендбук",
-      description: "Логотип ва дастури бренд барои стартап.",
-      category: "Дизайн",
-      skills: "Figma,Branding",
-      budget: 800,
-      deadline: in20,
-      status: "OPEN",
-    },
-  });
+  // completed projects + reviews (for ratings)
+  const done = [
+    ["freelancer@demo.tj", [5, 5, 5, 5, 5, 5], "website"],
+    ["designer@demo.tj", [5, 5, 5, 5, 5], "mobile"],
+    ["marketing@demo.tj", [5, 5, 5, 4, 5], "logo"],
+    ["translator@demo.tj", [5, 5, 4], "translate"],
+    ["mobile@demo.tj", [5, 4, 5], "food"],
+    ["brand@demo.tj", [5, 5], "logo"],
+  ];
+  const titles = {
+    "freelancer@demo.tj": ["Сайти мағозаи онлайн", "CRM барои клиника", "Портали хабарӣ", "Лендинги курсҳо", "Системаи брон барои меҳмонхона", "API барои логистика"],
+    "designer@demo.tj": ["Дизайни барномаи бонкӣ", "UI-и таксӣ-апп", "Редизайни сайти донишгоҳ", "Прототипи фитнес-апп", "Дизайни дашборд"],
+    "marketing@demo.tj": ["SMM барои қаҳвахона", "Рекламаи Instagram барои бутик", "Стратегияи контент", "Кампанияи Навруз", "SEO барои сайти сайёҳӣ"],
+    "translator@demo.tj": ["Тарҷумаи шартномаҳо", "Субтитрҳои филм", "Тарҷумаи сайт ба англисӣ"],
+    "mobile@demo.tj": ["Барномаи расонидан", "Апп барои мактаб", "Барномаи сайёҳӣ"],
+    "brand@demo.tj": ["Логотипи нонвойхона", "Брендбуки ширкати сохтмонӣ"],
+  };
+  const cities = ["Душанбе", "Хуҷанд", "Бохтар", "Кӯлоб", "Истаравшан", "Панҷакент", "Хоруғ"];
+  const comments = ["Корро зуд ва бо сифати аъло анҷом дод. Тавсия медиҳам!", "Мутахассиси касбӣ, муошираташ хуб.", "Натиҷа аз интизорӣ беҳтар шуд.", "Мӯҳлатҳоро риоя кард, ташаккур!", "Боз ҳамкорӣ мекунем."];
+  let k = 0;
+  for (const [f, ratings, cover] of done) {
+    for (const [ri, r] of ratings.entries()) {
+      const cl = k % 2 ? client2 : client1;
+      const pr = await prisma.project.create({ data: { clientId: cl.id, title: titles[f][ri], description: "Лоиҳа бомуваффақият анҷом ёфт ва аз ҷониби мизоҷ қабул шуд.", category: { "freelancer@demo.tj": "Веб-таҳия", "designer@demo.tj": "Дизайн", "marketing@demo.tj": "Маркетинг", "translator@demo.tj": "Тарҷума", "mobile@demo.tj": "Мобилӣ", "brand@demo.tj": "Дизайн" }[f], skills: F[f].name ? "" : "", budget: 500 + k * 100, coverUrl: C(cover), city: cities[k % cities.length], deadline: ago(10 + k), status: "COMPLETED", createdAt: ago(40 + k) } });
+      const pp = await prisma.proposal.create({ data: { projectId: pr.id, freelancerId: F[f].id, coverLetter: "Омодаам.", price: 450 + k * 90, deliveryDays: 7, status: "ACCEPTED" } });
+      await prisma.project.update({ where: { id: pr.id }, data: { acceptedProposalId: pp.id } });
+      await prisma.review.create({ data: { projectId: pr.id, fromUserId: cl.id, toUserId: F[f].id, rating: r, comment: comments[k % comments.length], createdAt: ago(5 + k) } });
+      await prisma.review.create({ data: { projectId: pr.id, fromUserId: F[f].id, toUserId: cl.id, rating: 5, comment: "Мизоҷи хуб, ҳама чиз равшан буд." } });
+      k++;
+    }
+  }
 
-  await prisma.project.create({
-    data: {
-      clientId: client2.id,
-      title: "Барномаи мобилӣ барои расонидани ғизо",
-      description: "Барномаи Flutter барои фармоиш ва расонидан.",
-      category: "Мобилӣ",
-      skills: "Flutter,Firebase",
-      budget: 4000,
-      deadline: in45,
-      status: "OPEN",
-    },
-  });
+  // in-progress with chat
+  const prog = await prisma.project.create({ data: { clientId: client1.id, title: "Даштборди аналитикаи фурӯш", description: "Даштборди оддӣ бо графикҳо барои фурӯши мағозаҳо дар Душанбе.", category: "Веб-таҳия", skills: "React,Chart.js,API", budget: 1800, coverUrl: C("dashboard"), city: "Душанбе", deadline: new Date(Date.now() + 25 * day), status: "IN_PROGRESS", createdAt: ago(3) } });
+  const pp = await prop(prog, "freelancer@demo.tj", "Чунин даштбордҳоро қаблан сохтаам.", 1700, 18, "ACCEPTED");
+  await prisma.project.update({ where: { id: prog.id }, data: { acceptedProposalId: pp.id } });
+  await prisma.message.create({ data: { projectId: prog.id, senderId: client1.id, body: "Салом Дилшод! Кай макетро медиҳед?", createdAt: ago(1, 3), readAt: ago(1, 2) } });
+  await prisma.message.create({ data: { projectId: prog.id, senderId: F["freelancer@demo.tj"].id, body: "Салом! Ана макети аввалия, назаратонро гӯед.", createdAt: ago(1, 2), readAt: ago(1, 1),
+    attachments: { create: { uploaderId: F["freelancer@demo.tj"].id, url: C("dashboard"), name: "maket-v1.svg", mimeType: "image/svg+xml", size: 3000 } } } });
+  await prisma.message.create({ data: { projectId: prog.id, senderId: client1.id, body: "Олӣ! Графики фурӯшро калонтар кунед, лутфан.", createdAt: ago(0, 5) } });
 
-  await prisma.proposal.create({
-    data: {
-      projectId: p1.id,
-      freelancerId: freelancers[0].id,
-      coverLetter:
-        "Салом! Метавонам дар 3 ҳафта MVP-ро пешниҳод кунам.",
-      price: 2200,
-      deliveryDays: 21,
-    },
-  });
+  const n = (u, type, title, body, link, read = false) => prisma.notification.create({ data: { userId: u.id, type, title, body, link, read } });
+  await n(client1, "NEW_PROPOSAL", "Пешниҳоди нав", "Дилшод Неъматов ба лоиҳаи «Сохтани вебсайти автосалон» пешниҳод дод", `/projects/${P[0].id}`);
+  await n(client1, "NEW_PROPOSAL", "Пешниҳоди нав", "Фарангис Раҷабова ба лоиҳаи «Логотип ва брендбук» пешниҳод дод", `/projects/${P[2].id}`);
+  await n(client1, "CHAT_MESSAGE", "Паёми нав", "Дилшод Неъматов: Ана макети аввалия...", `/projects/${prog.id}/chat`);
+  await n(client1, "NEW_REVIEW", "Баҳои нав", "Дилшод Неъматов ба шумо 5 ситора дод", `/projects/${prog.id}`, true);
+  await n(F["freelancer@demo.tj"], "PROPOSAL_ACCEPTED", "Пешниҳод қабул шуд", "Пешниҳоди шумо барои «Даштборди аналитикаи фурӯш» қабул шуд", `/projects/${prog.id}/chat`);
+  await n(F["freelancer@demo.tj"], "CHAT_MESSAGE", "Паёми нав", "Алишер Раҳимов: Графики фурӯшро калонтар кунед", `/projects/${prog.id}/chat`);
 
-  await prisma.proposal.create({
-    data: {
-      projectId: p1.id,
-      freelancerId: freelancers[1].id,
-      coverLetter: "Метавонам дизайни UI-ро омода кунам.",
-      price: 900,
-      deliveryDays: 14,
-    },
-  });
-
-  await prisma.notification.create({
-    data: {
-      userId: client1.id,
-      type: "NEW_PROPOSAL",
-      title: "Пешниҳоди нав",
-      body: "Дилшод Неъматов ба лоиҳаи «Вебсайти ширкати тиҷоратӣ» пешниҳод дод",
-      link: `/projects/${p1.id}`,
-      read: false,
-    },
-  });
-
-  const translator = await prisma.user.create({
-    data: {
-      email: "translator@demo.tj",
-      passwordHash,
-      name: "Нигора Юсуфӣ",
-      role: "FREELANCER",
-      profile: {
-        create: {
-          title: "Тарҷумон",
-          bio: "Тарҷумаи касбӣ: тоҷикӣ, русӣ, англисӣ.",
-          skills: "Тарҷума,Тоҷикӣ,Русӣ,Англисӣ",
-          hourlyRate: 15,
-          portfolio: "https://proz.com/demo",
-        },
-      },
-    },
-  });
-
-  const pDone = await prisma.project.create({
-    data: {
-      clientId: client2.id,
-      title: "Тарҷумаи ҳуҷҷатҳои ширкат",
-      description: "Тарҷума аз русӣ ба тоҷикӣ ва англисӣ.",
-      category: "Тарҷума",
-      skills: "Тарҷума,Тоҷикӣ,Англисӣ",
-      budget: 500,
-      deadline: new Date(Date.now() - 5 * 86400000),
-      status: "COMPLETED",
-    },
-  });
-
-  const propDone = await prisma.proposal.create({
-    data: {
-      projectId: pDone.id,
-      freelancerId: translator.id,
-      coverLetter: "Зуд ва бо сифат анҷом медиҳам.",
-      price: 450,
-      deliveryDays: 7,
-      status: "ACCEPTED",
-    },
-  });
-  await prisma.project.update({
-    where: { id: pDone.id },
-    data: { acceptedProposalId: propDone.id },
-  });
-
-  await prisma.review.create({
-    data: {
-      projectId: pDone.id,
-      fromUserId: client2.id,
-      toUserId: translator.id,
-      rating: 5,
-      comment: "Корро зуд ва бо сифати аъло анҷом дод!",
-    },
-  });
-  await prisma.review.create({
-    data: {
-      projectId: pDone.id,
-      fromUserId: translator.id,
-      toUserId: client2.id,
-      rating: 5,
-      comment: "Мизоҷи хуб.",
-    },
-  });
-
-  await prisma.notification.create({
-    data: {
-      userId: translator.id,
-      type: "NEW_REVIEW",
-      title: "Баҳои нав",
-      body: "Заррина Қаюмова ба шумо 5 ситора дод",
-      link: `/projects/${pDone.id}`,
-      read: false,
-    },
-  });
-
-  const pProg = await prisma.project.create({
-    data: {
-      clientId: client1.id,
-      title: "Даштборди аналитика",
-      description: "Даштборди оддӣ бо графикҳо барои фурӯш.",
-      category: "Веб-таҳия",
-      skills: "React,Chart.js,API",
-      budget: 1800,
-      deadline: in30,
-      status: "IN_PROGRESS",
-    },
-  });
-
-  const propProg = await prisma.proposal.create({
-    data: {
-      projectId: pProg.id,
-      freelancerId: freelancers[0].id,
-      coverLetter: "Чунин даштбордҳоро қаблан сохтаам.",
-      price: 1700,
-      deliveryDays: 18,
-      status: "ACCEPTED",
-    },
-  });
-  await prisma.project.update({
-    where: { id: pProg.id },
-    data: { acceptedProposalId: propProg.id },
-  });
-
-  const m1 = await prisma.message.create({
-    data: {
-      projectId: pProg.id,
-      senderId: client1.id,
-      body: "Салом Дилшод! Кай макетро медиҳед?",
-    },
-  });
-  await prisma.message.create({
-    data: {
-      projectId: pProg.id,
-      senderId: freelancers[0].id,
-      body: "Салом! То ҷумъа макети аввалияро мефиристам.",
-      readAt: new Date(),
-      attachments: {
-        create: {
-          uploaderId: freelancers[0].id,
-          url: chatImg,
-          name: "mock.png",
-          mimeType: "image/png",
-          size: 70,
-        },
-      },
-    },
-  });
-
-  await prisma.notification.create({
-    data: {
-      userId: freelancers[0].id,
-      type: "CHAT_MESSAGE",
-      title: "Паёми нав",
-      body: "Алишер Раҳимов: Салом Дилшод! Кай макетро медиҳед?",
-      link: `/projects/${pProg.id}/chat`,
-      read: false,
-    },
-  });
-  await prisma.notification.create({
-    data: {
-      userId: freelancers[0].id,
-      type: "PROPOSAL_ACCEPTED",
-      title: "Пешниҳод қабул шуд",
-      body: "Пешниҳоди шумо барои «Даштборди аналитика» қабул шуд",
-      link: `/projects/${pProg.id}/chat`,
-      read: true,
-    },
-  });
-
-  console.log("Seed OK (Postgres)");
-  console.log("Demo password: password123");
-  console.log("  client@demo.tj, freelancer@demo.tj, designer@demo.tj, ...");
-  console.log("chat project", pProg.id, "msg", m1.id);
+  console.log("Seed OK. Password for all demo users: password123");
 }
 
-main()
-  .catch((e) => {
-    console.error(e);
-    process.exit(1);
-  })
-  .finally(() => prisma.$disconnect());
+main().catch((e) => { console.error(e); process.exit(1); }).finally(() => prisma.$disconnect());
