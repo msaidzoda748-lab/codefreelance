@@ -41,6 +41,12 @@ for (const [email, name, role, av, city, title, skills, rate, exp] of users) {
   }
   ids[email] = u.id;
 }
+// Demo admin (clearly marked as demo). Created only if missing.
+if (!(await prisma.user.findUnique({ where: { email: "admin@demo.tj" } }))) {
+  hash ??= await bcrypt.hash("password123", 10);
+  await prisma.user.create({ data: { email: "admin@demo.tj", passwordHash: hash, name: "Маъмури намоишӣ (Demo Admin)", role: "CLIENT", isAdmin: true, isDemo: true, avatarUrl: A("user"), clientProfile: { create: {} } } });
+  console.log("[seed-refresh-demo] created demo admin admin@demo.tj");
+}
 let created = 0;
 for (const [email, title, description, category, skills, budget, cover, city, hrs] of projects) {
   const exists = await prisma.project.findFirst({ where: { title } });

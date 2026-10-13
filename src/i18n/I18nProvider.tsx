@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { LANG_COOKIE, type Lang } from "@/config/site";
 import { dictionaries, type Dict } from ".";
 
-export type SessionUser = { id: string; name: string; role: "CLIENT" | "FREELANCER"; avatarUrl: string | null } | null;
+export type SessionUser = { id: string; name: string; role: "CLIENT" | "FREELANCER"; avatarUrl: string | null; isAdmin: boolean; hasFreelancer: boolean; hasClient: boolean } | null;
 type Ctx = { lang: Lang; t: Dict; setLang: (l: Lang) => void; user: SessionUser };
 const I18nCtx = createContext<Ctx | null>(null);
 

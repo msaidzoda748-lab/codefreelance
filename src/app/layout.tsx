@@ -22,7 +22,7 @@ export const viewport: Viewport = { width: "device-width", initialScale: 1, view
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const lang = getLang();
   const u = await getCurrentUser();
-  const user: SessionUser = u ? { id: u.id, name: u.name, role: u.role as "CLIENT" | "FREELANCER", avatarUrl: u.avatarUrl } : null;
+  const user: SessionUser = u ? { id: u.id, name: u.name, role: u.role as "CLIENT" | "FREELANCER", avatarUrl: u.avatarUrl, isAdmin: u.isAdmin, hasFreelancer: !!u.profile, hasClient: !!u.clientProfile } : null;
   return (
     <html lang={lang === "tj" ? "tg" : lang} className={noto.variable} suppressHydrationWarning>
       <body className="font-sans">

@@ -43,13 +43,14 @@ export async function getCurrentUser() {
       user: {
         include: {
           profile: true,
+          clientProfile: true,
           reviewsRecv: true,
         },
       },
     },
   });
-  if (!session || session.expiresAt < new Date()) {
-    if (session) await prisma.session.delete({ where: { id: session.id } });
+  if (!session || session.expiresAt < new Date() || session.user.status !== "ACTIVE") {
+    if (session) await prisma.session.deleteMany({ where: { id: session.id } });
     return null;
   }
   return session.user;
@@ -59,4 +60,8 @@ export function avgRating(reviews: { rating: number }[]) {
   if (!reviews.length) return null;
   const sum = reviews.reduce((a, r) => a + r.rating, 0);
   return Math.round((sum / reviews.length) * 10) / 10;
+}
+
+export function appUrl() {
+  return (process.env.APP_URL || process.env.NEXTAUTH_URL || "http://localhost:3000").replace(/\/$/, "");
 }

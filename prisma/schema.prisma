@@ -15,10 +15,19 @@ model User {
   role         String
   avatarUrl    String?
   city         String   @default("Душанбе")
+  /// Active role used by the UI: CLIENT | FREELANCER. A user may hold both profiles and switch.
+  isAdmin      Boolean  @default(false)
+  /// ACTIVE | RESTRICTED
+  status       String   @default("ACTIVE")
+  restrictedReason String?
+  uiLanguage   String   @default("tj")
+  isDemo       Boolean  @default(false)
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
   profile        FreelancerProfile?
+  clientProfile  ClientProfile?
+  resetTokens    PasswordResetToken[]
   projects       Project[]          @relation("ClientProjects")
   proposals      Proposal[]
   sentMessages   Message[]          @relation("SentMessages")
@@ -29,6 +38,28 @@ model User {
   attachments    Attachment[]
 }
 
+model ClientProfile {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  company   String   @default("")
+  about     String   @default("")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model PasswordResetToken {
+  id        String    @id @default(cuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([userId])
+}
+
 model Session {
   id        String   @id @default(cuid())
   token     String   @unique
@@ -36,6 +67,8 @@ model Session {
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   expiresAt DateTime
   createdAt DateTime @default(now())
+
+  @@index([userId])
 }
 
 model FreelancerProfile {

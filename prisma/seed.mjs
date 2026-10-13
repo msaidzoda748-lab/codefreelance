@@ -8,13 +8,14 @@ const A = (n) => `/img/avatars/${n}.svg`;
 const C = (n) => `/img/covers/${n}.svg`;
 
 async function main() {
-  for (const m of ["notification", "attachment", "review", "message", "proposal", "project", "freelancerProfile", "session", "user"]) {
+  for (const m of ["passwordResetToken", "clientProfile", "notification", "attachment", "review", "message", "proposal", "project", "freelancerProfile", "session", "user"]) {
     await prisma[m].deleteMany();
   }
   const passwordHash = await bcrypt.hash("password123", 10);
 
-  const client1 = await prisma.user.create({ data: { email: "client@demo.tj", passwordHash, name: "Алишер Раҳимов", role: "CLIENT", avatarUrl: A("alisher"), city: "Душанбе" } });
-  const client2 = await prisma.user.create({ data: { email: "client2@demo.tj", passwordHash, name: "Заррина Қаюмова", role: "CLIENT", avatarUrl: A("zarrina"), city: "Хуҷанд" } });
+  await prisma.user.create({ data: { email: "admin@demo.tj", passwordHash, name: "Маъмури намоишӣ (Demo Admin)", role: "CLIENT", isAdmin: true, isDemo: true, avatarUrl: A("user"), city: "Душанбе", clientProfile: { create: {} } } });
+  const client1 = await prisma.user.create({ data: { email: "client@demo.tj", passwordHash, name: "Алишер Раҳимов", role: "CLIENT", isDemo: true, avatarUrl: A("alisher"), city: "Душанбе", clientProfile: { create: { company: "AutoLux" } } } });
+  const client2 = await prisma.user.create({ data: { email: "client2@demo.tj", passwordHash, name: "Заррина Қаюмова", role: "CLIENT", isDemo: true, avatarUrl: A("zarrina"), city: "Хуҷанд", clientProfile: { create: {} } } });
 
   const fdata = [
     ["freelancer@demo.tj", "Дилшод Неъматов", "Full Stack Developer", "dilshod", "Душанбе", "React,Node.js,MongoDB,Next.js,PostgreSQL", 120, "5 сол таҷриба дар сохтани вебсайтҳо ва барномаҳои веб барои ширкатҳои Тоҷикистон ва берун аз он."],
@@ -28,7 +29,7 @@ async function main() {
   const F = {};
   for (const [email, name, title, av, city, skills, rate, bio] of fdata) {
     F[email] = await prisma.user.create({
-      data: { email, passwordHash, name, role: "FREELANCER", avatarUrl: A(av), city,
+      data: { email, passwordHash, name, role: "FREELANCER", isDemo: true, avatarUrl: A(av), city,
         profile: { create: { title, bio, skills, hourlyRate: rate, experienceYears: EXP[email] ?? 2, portfolio: `https://github.com/${av}\nhttps://behance.net/${av}` } } },
     });
   }
