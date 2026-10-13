@@ -4,6 +4,7 @@ import { ApiError, handle, ok, readJson, requireUser, str } from "@/lib/api";
 import { LANGS } from "@/config/site";
 import { validatePassword } from "@/lib/validation";
 
+export const dynamic = "force-dynamic";
 export const GET = handle(async () => {
   const u = await requireUser();
   return ok({ user: { id: u.id, name: u.name, email: u.email, city: u.city, uiLanguage: u.uiLanguage, avatarUrl: u.avatarUrl, role: u.role, isAdmin: u.isAdmin, hasFreelancer: !!u.profile, hasClient: !!u.clientProfile, company: u.clientProfile?.company ?? "", about: u.clientProfile?.about ?? "" } });

@@ -3,6 +3,7 @@ import { handle, ok, readJson, requireUser } from "@/lib/api";
 import { maybeRunDeadlineJob } from "@/lib/services/deadlines";
 
 const PAGE = 20;
+export const dynamic = "force-dynamic";
 export const GET = handle(async (req: Request) => {
   const user = await requireUser();
   void maybeRunDeadlineJob(); // lazy fallback when no external cron is configured (idempotent)

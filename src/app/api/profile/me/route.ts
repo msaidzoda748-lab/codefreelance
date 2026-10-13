@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { ApiError, handle, ok, requireUser } from "@/lib/api";
 
+export const dynamic = "force-dynamic";
 export const GET = handle(async () => {
   const user = await requireUser();
   if (!user.profile) throw new ApiError("only_freelancer", 403);

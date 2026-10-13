@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { handle, ok, readJson, requireUser, str } from "@/lib/api";
 
+export const dynamic = "force-dynamic";
 export const GET = handle(async () => {
   const user = await requireUser();
   const rows = await prisma.savedProject.findMany({ where: { userId: user.id }, select: { projectId: true } });

@@ -4,6 +4,7 @@ import { MSG_PAGE, msgInclude, requireMember, sendMessage, serializeMessage } fr
 
 type Ctx = { params: { id: string } };
 /** Paginated history (newest page first; pass ?before=<messageId> for older). */
+export const dynamic = "force-dynamic";
 export const GET = handle(async (req: Request, { params }: Ctx) => {
   const user = await requireUser();
   const conv = await requireMember(params.id, user.id);

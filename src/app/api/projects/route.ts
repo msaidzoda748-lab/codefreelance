@@ -5,6 +5,7 @@ import { searchProjects, setProjectSkills } from "@/lib/queries/projects";
 
 const COVERS: Record<string, string> = { web: "website", mobile: "mobile", dev: "dashboard", bots: "dashboard", design: "logo", marketing: "translate", translate: "translate" };
 
+export const dynamic = "force-dynamic";
 export const GET = handle(async (req: Request) => {
   const sp = Object.fromEntries(new URL(req.url).searchParams.entries());
   const r = await searchProjects(sp);

@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { ApiError, handle, ok, readJson, requireUser, str } from "@/lib/api";
 import { findOrCreateDirect, unreadCounts } from "@/lib/services/chat";
 
+export const dynamic = "force-dynamic";
 export const GET = handle(async () => {
   const user = await requireUser();
   const convs = await prisma.conversation.findMany({
