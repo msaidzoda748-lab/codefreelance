@@ -16,7 +16,7 @@ export const realtime: EventEmitter =
 realtime.setMaxListeners(100);
 if (!globalThis.__cfRealtime) globalThis.__cfRealtime = realtime;
 
-export function emitChat(event: ChatEvent) {
+export function emitChat(event: Exclude<ChatEvent, { type: "notification" }>) {
   realtime.emit(`chat:${event.projectId}`, event);
   if (event.type === "message") {
     realtime.emit("chat:any", event);

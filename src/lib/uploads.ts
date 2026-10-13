@@ -58,7 +58,7 @@ async function saveLocal(
 ): Promise<string> {
   const dir = path.join(process.cwd(), "public", "uploads", kind);
   await mkdir(dir, { recursive: true });
-  await writeFile(path.join(dir, filename), buf);
+  await writeFile(path.join(dir, filename), new Uint8Array(buf));
   return `/uploads/${kind}/${filename}`;
 }
 
@@ -82,7 +82,7 @@ async function saveCloudinary(
   const signature = createHash("sha1").update(toSign).digest("hex");
 
   const form = new FormData();
-  form.append("file", new Blob([buf], { type: mime }), filename);
+  form.append("file", new Blob([new Uint8Array(buf)], { type: mime }), filename);
   form.append("api_key", key);
   form.append("timestamp", timestamp);
   form.append("folder", folder);
