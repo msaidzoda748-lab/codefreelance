@@ -29,7 +29,8 @@ export default function LoginPage() {
       setError(data.error || "Хатогӣ");
       return;
     }
-    router.push("/");
+    const next = new URLSearchParams(window.location.search).get("next") || "/";
+    router.push(next.startsWith("/") && !next.startsWith("//") ? next : "/");
     router.refresh();
   }
 

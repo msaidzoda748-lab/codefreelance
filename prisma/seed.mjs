@@ -24,19 +24,22 @@ async function main() {
     ["translator@demo.tj", "Нигора Юсуфӣ", "Тарҷумон", "nigora", "Кӯлоб", "Тарҷума,Тоҷикӣ,Русӣ,Англисӣ", 60, "Тарҷумаи касбӣ: тоҷикӣ, русӣ, англисӣ."],
     ["brand@demo.tj", "Фарангис Раҷабова", "Графикӣ дизайнер", "farangis", "Истаравшан", "Illustrator,Branding,Logo", 90, "Логотип, брендбук ва иллюстратсия."],
   ];
+  const EXP = {"freelancer@demo.tj": 5, "designer@demo.tj": 4, "marketing@demo.tj": 3, "mobile@demo.tj": 6, "translator@demo.tj": 7, "brand@demo.tj": 4};
   const F = {};
   for (const [email, name, title, av, city, skills, rate, bio] of fdata) {
     F[email] = await prisma.user.create({
       data: { email, passwordHash, name, role: "FREELANCER", avatarUrl: A(av), city,
-        profile: { create: { title, bio, skills, hourlyRate: rate, portfolio: `https://github.com/${av}\nhttps://behance.net/${av}` } } },
+        profile: { create: { title, bio, skills, hourlyRate: rate, experienceYears: EXP[email] ?? 2, portfolio: `https://github.com/${av}\nhttps://behance.net/${av}` } } },
     });
   }
 
   const open = [
-    [client1, "Сохтани вебсайти автосалон", "Барои автосалони нав вебсайти муосир бо каталоги мошинҳо, филтр ва имкони дархости санҷиши ронандагӣ лозим аст.", "Веб-таҳия", "React,UI/UX,Figma,Next.js,Tailwind", 2500, "website", "Душанбе", 20],
-    [client2, "Дизайни барномаи мобилӣ", "Лозим аст дизайни барномаи мобилӣ (iOS/Android) барои платформаи хизматрасонӣ. Дизайни муосир, содда ва ба истифодабаранда қулай.", "Дизайн", "UI/UX,Figma,Mobile App,Prototyping", 1800, "mobile", "Душанбе", 72],
-    [client1, "Логотип ва брендбук барои стартап", "Логотипи нав ва дастури бренд барои стартапи технологӣ: рангҳо, типография ва намунаҳо.", "Дизайн", "Illustrator,Branding,Logo", 900, "logo", "Хуҷанд", 30],
-    [client2, "Барномаи фармоиши ғизо", "Барномаи Flutter барои фармоиш ва расонидани ғизо дар Хуҷанд: меню, сабад, пайгирӣ.", "Мобилӣ", "Flutter,Firebase,Dart,API", 4000, "food", "Хуҷанд", 5],
+    [client1, "Сохтани вебсайти автосалон", "Барои автосалони мо вебсайти муосир бо каталоги мошинҳо, филтр ва формаи тамос лозим аст.", "Веб-таҳия", "React,Next.js", 2500, "website", "Душанбе", 2],
+    [client2, "Дизайни барномаи мобилӣ", "Дизайни замонавии барномаи мобилӣ барои хизматрасонии онлайн лозим аст.", "Дизайн", "UI/UX,Figma", 1800, "mobile", "Душанбе", 5],
+    [client1, "Логотип ва брендбук барои стартап", "Логотипи нав ва дастури бренд барои стартапи технологӣ: рангҳо, типография ва намунаҳо.", "Дизайн", "Illustrator,Branding,Logo", 900, "logo", "Хуҷанд", 50],
+    [client2, "Барномаи фармоиши ғизо", "Барномаи Flutter барои фармоиш ва расонидани ғизо дар Хуҷанд: меню, сабад, пайгирӣ.", "Мобилӣ", "Flutter,Firebase,Dart,API", 4000, "food", "Хуҷанд", 20],
+    [client1, "Telegram-бот барои мағозаи онлайн", "Боти Telegram барои қабули фармоиш, каталоги мол ва огоҳиномаҳо ба менеҷер.", "Ботҳо", "Python,Telegram API,PostgreSQL", 1200, "dashboard", "Душанбе", 28],
+    [client2, "Реклама дар Instagram барои қаҳвахона", "Стратегияи SMM ва 12 пости рекламавӣ барои қаҳвахонаи нав дар Хуҷанд.", "Маркетинг", "SMM,Instagram,Content", 700, "translate", "Хуҷанд", 72],
   ];
   const P = [];
   for (const [cl, title, description, category, skills, budget, cover, city, hrs] of open) {

@@ -1,32 +1,36 @@
+"use client";
 import Link from "next/link";
 import { Mail, MapPin } from "lucide-react";
+import { SITE } from "@/config/site";
+import { useI18n } from "@/i18n/I18nProvider";
 import Logo from "./Logo";
 
 export default function Footer() {
+  const { t } = useI18n();
   return (
-    <footer className="mt-12 border-t border-slate-100 bg-white dark:border-slate-800 dark:bg-slate-950">
-      <div className="mx-auto grid max-w-[1320px] gap-8 px-4 py-10 sm:grid-cols-2 sm:px-6 lg:grid-cols-4">
+    <footer className="mt-12 border-t border-line bg-white dark:border-slate-800 dark:bg-slate-950">
+      <div className="mx-auto grid max-w-[1280px] gap-8 px-4 py-10 sm:grid-cols-2 sm:px-6 lg:grid-cols-4">
         <div className="lg:col-span-2">
           <Logo />
-          <p className="mt-3 max-w-md text-sm text-slate-500">Платформаи боэътимод барои фрилансерҳо ва мизоҷон дар Тоҷикистон.</p>
+          <p className="mt-3 max-w-md text-sm text-ink-muted">{t.footer.tagline}</p>
         </div>
         <div>
-          <h4 className="text-sm font-bold text-navy-900 dark:text-white">Платформа</h4>
+          <h2 className="text-sm font-bold text-ink dark:text-white">{t.footer.platform}</h2>
           <ul className="mt-3 space-y-2 text-sm">
-            <li><Link href="/projects" className="text-slate-500 hover:text-brand-600">Лоиҳаҳо</Link></li>
-            <li><Link href="/freelancers" className="text-slate-500 hover:text-brand-600">Фрилансерҳо</Link></li>
-            <li><Link href="/#how" className="text-slate-500 hover:text-brand-600">Чӣ тавр кор мекунад</Link></li>
+            <li><Link href="/projects" className="text-ink-muted hover:text-brand-600">{t.nav.projects}</Link></li>
+            <li><Link href="/freelancers" className="text-ink-muted hover:text-brand-600">{t.nav.freelancers}</Link></li>
+            <li><Link href="/#how" className="text-ink-muted hover:text-brand-600">{t.nav.how}</Link></li>
           </ul>
         </div>
         <div>
-          <h4 className="text-sm font-bold text-navy-900 dark:text-white">Тамос</h4>
-          <ul className="mt-3 space-y-2 text-sm text-slate-500">
-            <li className="flex items-center gap-2"><Mail className="h-4 w-4" />support@codefreelance.tj</li>
-            <li className="flex items-center gap-2"><MapPin className="h-4 w-4" />Душанбе, Тоҷикистон</li>
+          <h2 className="text-sm font-bold text-ink dark:text-white">{t.footer.contact}</h2>
+          <ul className="mt-3 space-y-2 text-sm text-ink-muted">
+            <li className="flex items-center gap-2"><Mail className="h-4 w-4" aria-hidden />{SITE.supportEmail}</li>
+            <li className="flex items-center gap-2"><MapPin className="h-4 w-4" aria-hidden />{SITE.city}</li>
           </ul>
         </div>
       </div>
-      <div className="border-t border-slate-100 py-4 text-center text-xs text-slate-400 dark:border-slate-800">© {new Date().getFullYear()} CodeFreelance</div>
+      <div className="border-t border-line py-4 text-center text-xs text-slate-400 dark:border-slate-800">© {new Date().getFullYear()} {SITE.name}</div>
     </footer>
   );
 }

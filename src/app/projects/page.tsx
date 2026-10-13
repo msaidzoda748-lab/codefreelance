@@ -30,7 +30,7 @@ export default async function ProjectsPage({ searchParams }: { searchParams: { q
           <h1 className="text-3xl font-extrabold tracking-tight text-navy-900 dark:text-white">Лоиҳаҳо</h1>
           <p className="mt-1 text-sm muted">{projects.length} лоиҳа ёфт шуд</p>
         </div>
-        <Link href="/projects/new" className="btn-primary no-underline"><PlusCircle className="h-4 w-4" />Ҷойгир кардани лоиҳа</Link>
+        <Link href="/projects/new" className="btn-primary hidden no-underline sm:inline-flex"><PlusCircle className="h-4 w-4" />Ҷойгир кардани лоиҳа</Link>
       </div>
       <div className="grid gap-6 lg:grid-cols-[280px_1fr]">
         <form className="card h-fit space-y-4 lg:sticky lg:top-24">
@@ -62,8 +62,8 @@ export default async function ProjectsPage({ searchParams }: { searchParams: { q
           <button type="submit" className="btn-primary w-full">Татбиқ кардан</button>
         </form>
         <div>
-          <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-            {projects.map((p) => <ProjectCard key={p.id} p={p} showStatus />)}
+          <div className="grid gap-4">
+            {projects.map((p) => <ProjectCard key={p.id} p={{ ...p, createdAt: p.createdAt.toISOString() }} showStatus />)}
           </div>
           {!projects.length && <div className="card py-12 text-center muted">Лоиҳа ёфт нашуд.</div>}
         </div>

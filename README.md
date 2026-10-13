@@ -72,3 +72,22 @@ Start: `npm start` (PORT аз Render)
 - SSE дар як инстанс (multi-instance ба Redis лозим мешавад)
 - Local uploads дар Render free гум мешаванд
 - Андозаи файл: аватар 2МБ, дигар 5МБ
+
+## Frontend v3 (responsive redesign)
+
+- Brand name lives in one constant: `src/config/site.ts` (`SITE.name`, `SITE.nameParts`).
+- Translations: `src/i18n/{tj,ru,en}.ts` (TJ/RU/EN switch in header, stored in the `cf-lang` cookie).
+- Data separated from UI: `src/data/categories.ts`, `src/data/home.ts`.
+- Components: `Header` (`HeaderClient`), `HeroSearch`, `CategoryFilter`, `ProjectCard`, `FreelancerCard`,
+  `BottomNavigation`, `ProposalModal`, `CreateProjectModal`, `Modal`, `LangSwitch`.
+- Bookmarks are saved in `localStorage` (`cf-bookmarks`).
+- `ProposalModal` → `POST /api/proposals`; `CreateProjectModal` → `POST /api/projects` (real backend; guests get a login prompt).
+- New page `/messages` lists chats; bottom nav (mobile < 768px): Асосӣ / Лоиҳаҳо / Паёмҳо / Профил.
+
+### Responsive test
+
+```bash
+npm run dev                       # http://localhost:3000
+node scripts/responsive-test.mjs  # screenshots → screenshots/responsive/, checks overflow, bottom nav, forms
+node prisma/seed.mjs              # reset demo data after the test (it creates a proposal and a project)
+```

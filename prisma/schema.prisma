@@ -46,6 +46,7 @@ model FreelancerProfile {
   bio        String
   skills     String
   hourlyRate Int
+  experienceYears Int @default(1)
   portfolio  String
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt

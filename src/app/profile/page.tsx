@@ -4,6 +4,8 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Camera, Save } from "lucide-react";
 import Avatar from "@/components/Avatar";
+import Link from "next/link";
+import { useI18n } from "@/i18n/I18nProvider";
 
 type Profile = {
   name: string;
@@ -22,6 +24,7 @@ export default function MyProfilePage() {
   const [ok, setOk] = useState("");
   const [loading, setLoading] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
+  const { user, t } = useI18n();
 
   useEffect(() => {
     fetch("/api/profile/me")
@@ -73,6 +76,23 @@ export default function MyProfilePage() {
 
   if (!profile && !error) return <p className="muted">Боргирӣ...</p>;
   if (error && !profile) return <p className="text-rose-600">{error}</p>;
+  if (user?.role === "CLIENT") {
+    return (
+      <div className="mx-auto max-w-md animate-slide-up">
+        <div className="card text-center">
+          <div className="mx-auto w-fit"><Avatar name={user.name} src={user.avatarUrl} size="lg" /></div>
+          <h1 className="mt-3 text-xl font-bold text-ink">{user.name}</h1>
+          <p className="text-sm text-ink-muted">Мизоҷ</p>
+          <div className="mt-5 grid gap-2">
+            <Link href="/projects?status=ALL" className="btn-secondary no-underline">{t.nav.projects}</Link>
+            <Link href="/messages" className="btn-secondary no-underline">{t.bottom.messages}</Link>
+            <Link href="/notifications" className="btn-secondary no-underline">{t.nav.notifications}</Link>
+            <form action="/api/auth/logout" method="POST"><button className="btn-ghost w-full">{t.nav.logout}</button></form>
+          </div>
+        </div>
+      </div>
+    );
+  }
   if (!profile) return null;
 
   return (
