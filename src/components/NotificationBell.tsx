@@ -1,147 +1,69 @@
 "use client";
-
 import Link from "next/link";
 import { Bell } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
+import { useI18n } from "@/i18n/I18nProvider";
+import { fmt, notifText, relTime } from "@/i18n/format";
+import { api } from "@/lib/client";
 
-type N = {
-  id: string;
-  title: string;
-  body: string;
-  link: string | null;
-  read: boolean;
-  createdAt: string;
-  type: string;
-};
+type N = { id: string; type: string; title: string; body: string; link: string | null; read: boolean; createdAt: string };
 
 export default function NotificationBell() {
+  const { t, lang } = useI18n();
+  const router = useRouter();
   const [open, setOpen] = useState(false);
   const [items, setItems] = useState<N[]>([]);
   const [unread, setUnread] = useState(0);
   const ref = useRef<HTMLDivElement>(null);
-
-  async function load() {
-    const res = await fetch("/api/notifications?limit=12");
-    if (!res.ok) return;
-    const data = await res.json();
-    setItems(data.notifications);
-    setUnread(data.unreadCount);
-  }
-
+  const load = useCallback(async () => {
+    const r = await api<{ notifications: N[]; unread: number }>("/api/notifications");
+    if (r.ok) { setItems(r.data.notifications.slice(0, 10)); setUnread(r.data.unread); }
+  }, []);
   useEffect(() => {
     load();
     const es = new EventSource("/api/notifications/stream");
-    es.onmessage = (ev) => {
-      try {
-        const data = JSON.parse(ev.data);
-        if (data.type === "notification") {
-          load();
-        }
-      } catch {
-        /* ignore */
-      }
-    };
-    const t = setInterval(load, 60000);
-    return () => {
-      es.close();
-      clearInterval(t);
-    };
-  }, []);
-
+    es.onmessage = (ev) => { try { const d = JSON.parse(ev.data); if (d.type !== "connected") load(); } catch { /* ignore */ } };
+    const iv = setInterval(load, 60000);
+    return () => { es.close(); clearInterval(iv); };
+  }, [load]);
   useEffect(() => {
-    function onDoc(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) {
-        setOpen(false);
-      }
-    }
-    document.addEventListener("mousedown", onDoc);
-    return () => document.removeEventListener("mousedown", onDoc);
+    const onDoc = (e: MouseEvent) => { if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false); };
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setOpen(false); };
+    document.addEventListener("mousedown", onDoc); document.addEventListener("keydown", onKey);
+    return () => { document.removeEventListener("mousedown", onDoc); document.removeEventListener("keydown", onKey); };
   }, []);
-
-  async function markAll() {
-    await fetch("/api/notifications", {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ all: true }),
-    });
-    load();
-  }
-
+  async function markAll() { await api("/api/notifications", { method: "POST", json: { all: true } }); load(); }
   async function openItem(n: N) {
-    if (!n.read) {
-      await fetch("/api/notifications", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id: n.id }),
-      });
-    }
+    if (!n.read) await api("/api/notifications", { method: "POST", json: { ids: [n.id] } });
     setOpen(false);
-    if (n.link) window.location.href = n.link;
-    else load();
+    if (n.link) router.push(n.link); else load();
   }
-
   return (
     <div className="relative" ref={ref}>
-      <button
-        type="button"
-        className="btn-ghost relative !p-2.5"
-        onClick={() => {
-          setOpen((v) => !v);
-          load();
-        }}
-        aria-label="Огоҳиҳо"
-      >
-        <Bell className="h-4 w-4" />
-        {unread > 0 && (
-          <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-rose-500 px-1 text-[10px] font-bold text-white">
-            {unread > 9 ? "9+" : unread}
-          </span>
-        )}
+      <button type="button" className="relative flex h-11 w-11 items-center justify-center rounded-xl text-navy-800 transition hover:bg-slate-100" onClick={() => { setOpen((v) => !v); load(); }}
+        aria-label={fmt(t.notif.open, { n: unread })} aria-expanded={open} aria-haspopup="true" data-testid="bell">
+        <Bell className="h-5 w-5" aria-hidden />
+        {unread > 0 && <span className="absolute right-1 top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-rose-500 px-1 text-[10px] font-bold text-white" data-testid="bell-badge">{unread > 9 ? "9+" : unread}</span>}
       </button>
       {open && (
-        <div className="absolute right-0 z-50 mt-2 w-80 overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-soft dark:border-slate-700 dark:bg-slate-900 sm:w-96">
-          <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3 dark:border-slate-800">
-            <span className="font-bold">Огоҳиҳо</span>
-            {unread > 0 && (
-              <button
-                type="button"
-                onClick={markAll}
-                className="text-xs font-medium text-brand-600"
-              >
-                Ҳамаро хондан
-              </button>
-            )}
+        <div className="absolute right-0 z-50 mt-2 w-[min(22rem,calc(100vw-2rem))] overflow-hidden rounded-2xl border border-line bg-white shadow-soft">
+          <div className="flex items-center justify-between border-b border-line px-4 py-3">
+            <span className="font-bold">{t.notif.title}</span>
+            {unread > 0 && <button type="button" onClick={markAll} className="min-h-[36px] text-xs font-semibold text-brand-700">{t.notif.markAll}</button>}
           </div>
-          <div className="max-h-80 overflow-y-auto">
-            {items.length === 0 && (
-              <p className="px-4 py-8 text-center text-sm muted">
-                Огоҳӣ нест
-              </p>
-            )}
+          <ul className="max-h-80 overflow-y-auto">
+            {!items.length && <li className="px-4 py-8 text-center text-sm text-ink-muted">{t.notif.empty}</li>}
             {items.map((n) => (
-              <button
-                key={n.id}
-                type="button"
-                onClick={() => openItem(n)}
-                className={`block w-full border-b border-slate-50 px-4 py-3 text-left transition hover:bg-slate-50 dark:border-slate-800 dark:hover:bg-slate-800/60 ${
-                  !n.read ? "bg-brand-50/50 dark:bg-brand-950/30" : ""
-                }`}
-              >
-                <div className="text-sm font-semibold">{n.title}</div>
-                <div className="mt-0.5 line-clamp-2 text-xs muted">{n.body}</div>
-                <div className="mt-1 text-[10px] text-slate-400">
-                  {new Date(n.createdAt).toLocaleString("tg-TJ")}
-                </div>
-              </button>
+              <li key={n.id}>
+                <button type="button" onClick={() => openItem(n)} className={`block w-full border-b border-slate-50 px-4 py-3 text-left transition hover:bg-slate-50 ${!n.read ? "bg-brand-50/60" : ""}`}>
+                  <span className="line-clamp-2 block text-sm">{notifText(t, n)}</span>
+                  <span className="mt-1 block text-[11px] text-slate-400">{relTime(n.createdAt, lang)}</span>
+                </button>
+              </li>
             ))}
-          </div>
-          <Link
-            href="/notifications"
-            onClick={() => setOpen(false)}
-            className="block border-t border-slate-100 px-4 py-2.5 text-center text-sm font-semibold text-brand-600 no-underline dark:border-slate-800"
-          >
-            Ҳама огоҳиҳо
-          </Link>
+          </ul>
+          <Link href="/notifications" onClick={() => setOpen(false)} className="block border-t border-line px-4 py-3 text-center text-sm font-semibold text-brand-700 no-underline">{t.notif.title}</Link>
         </div>
       )}
     </div>

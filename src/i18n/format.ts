@@ -29,3 +29,17 @@ export function money(n: number, t: Dict) {
 export function moneyRange(p: { budget: number; budgetMin?: number | null; budgetMax?: number | null }, t: Dict) {
   return p.budgetMin != null && p.budgetMax != null && p.budgetMin !== p.budgetMax ? `${money(p.budgetMin, t).replace(` ${t.common.somoni}`, "")}–${money(p.budgetMax, t)}` : money(p.budget, t);
 }
+/** Render a stored notification in the viewer's language (type + JSON params; falls back to legacy title/body). */
+export function notifText(t: Dict, n: { type: string; title: string; body: string }) {
+  const tpl = (t.notif as Record<string, string>)[n.type];
+  if (tpl && n.body.startsWith("{")) { try { return fmt(tpl, JSON.parse(n.body)); } catch { /* legacy */ } }
+  return n.body ? `${n.title}: ${n.body}` : n.title;
+}
+export function relTime(d: Date | string, lang: string) {
+  const s = Math.max(1, Math.round((Date.now() - new Date(d).getTime()) / 1000));
+  const rtf = new Intl.RelativeTimeFormat(lang === "en" ? "en" : "ru", { numeric: "auto" });
+  if (s < 60) return rtf.format(-s, "second");
+  if (s < 3600) return rtf.format(-Math.floor(s / 60), "minute");
+  if (s < 86400) return rtf.format(-Math.floor(s / 3600), "hour");
+  return rtf.format(-Math.floor(s / 86400), "day");
+}
