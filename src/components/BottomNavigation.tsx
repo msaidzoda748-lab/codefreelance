@@ -11,7 +11,7 @@ export default function BottomNavigation() {
     { href: "/", label: t.bottom.home, icon: Home, active: path === "/" },
     { href: "/projects", label: t.bottom.projects, icon: Briefcase, active: path.startsWith("/projects") },
     { href: user ? "/messages" : "/login?next=/messages", label: t.bottom.messages, icon: MessageCircle, active: path.startsWith("/messages") },
-    { href: user ? "/profile" : "/login?next=/profile", label: t.bottom.profile, icon: UserRound, active: path.startsWith("/profile") || path.startsWith("/login") },
+    { href: user ? "/dashboard" : "/login?next=/dashboard", label: t.bottom.profile, icon: UserRound, active: ["/dashboard", "/profile", "/account", "/orders", "/login"].some((x) => path.startsWith(x)) },
   ];
   return (
     <nav aria-label="Bottom" className="fixed inset-x-0 bottom-0 z-50 border-t border-line bg-white/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-xl md:hidden dark:border-slate-800 dark:bg-slate-950/95">

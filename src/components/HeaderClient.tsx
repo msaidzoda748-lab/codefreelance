@@ -19,9 +19,10 @@ export default function HeaderClient() {
   const links = [
     { href: "/projects", label: t.nav.projects },
     { href: "/freelancers", label: t.nav.freelancers },
-    { href: "/#how", label: t.nav.how },
+    ...(user ? [{ href: "/dashboard", label: t.nav.dashboard }, { href: "/messages", label: t.nav.messages }] : [{ href: "/#how", label: t.nav.how }]),
+    ...(user?.isAdmin ? [{ href: "/admin", label: t.nav.admin }] : []),
   ];
-  const navCls = (href: string) => `rounded-xl px-1 py-2 text-[15px] font-medium transition hover:text-brand-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-400 ${path === href ? "text-brand-700" : "text-navy-800 dark:text-slate-300"}`;
+  const navCls = (href: string) => `rounded-xl px-1 py-2 text-[15px] font-medium transition hover:text-brand-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-400 ${path === href || (href.length > 2 && path.startsWith(href + "/")) ? "text-brand-700" : "text-navy-800 dark:text-slate-300"}`;
   return (
     <header className="sticky top-0 z-50 border-b border-line bg-white/90 backdrop-blur-xl dark:border-slate-800 dark:bg-slate-950/85">
       <div className="mx-auto flex max-w-[1280px] items-center justify-between gap-3 px-4 py-2.5 sm:px-6 sm:py-3">
@@ -34,10 +35,10 @@ export default function HeaderClient() {
         <div className="flex items-center gap-1 sm:gap-2">
           <LangSwitch />
           <div className="hidden md:block"><ThemeToggle /></div>
-          {user && <div className="hidden md:block"><NotificationBell /></div>}
+          {user && <NotificationBell />}
           {user ? (
             <>
-              <Link href="/profile" aria-label={t.nav.myProfile} className="rounded-full p-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-400"><Avatar name={user.name} src={user.avatarUrl} size="sm" /></Link>
+              <Link href="/account" aria-label={t.nav.account} className="rounded-full p-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-400"><Avatar name={user.name} src={user.avatarUrl} size="sm" /></Link>
               <form action="/api/auth/logout" method="POST" className="hidden md:block">
                 <button type="submit" className="icon-btn !border-transparent" aria-label={t.nav.logout} title={t.nav.logout}><LogOut className="h-4 w-4" /></button>
               </form>
