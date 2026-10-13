@@ -1,3 +1,4 @@
+import { SITE } from "@/config/site";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { storageNote } from "@/lib/uploads";
@@ -9,7 +10,7 @@ export async function GET() {
     await prisma.$queryRaw`SELECT 1`;
     return NextResponse.json({
       ok: true,
-      service: "CodeFreelance",
+      service: SITE.name,
       db: "up",
       storage: process.env.STORAGE_PROVIDER || "local",
       note: storageNote(),

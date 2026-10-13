@@ -1,8 +1,8 @@
 /** Change the brand name in ONE place. */
 export const SITE = {
-  name: "CodeFreelance",
-  nameParts: ["Code", "Freelance"] as [string, string],
-  supportEmail: "support@codefreelance.tj",
+  name: "Zoir Freelance",
+  nameParts: ["Zoir", "Freelance"] as [string, string],
+  supportEmail: "support@zoirfreelance.tj",
   city: "Душанбе, Тоҷикистон",
 };
 export const LANGS = ["tj", "ru", "en"] as const;
