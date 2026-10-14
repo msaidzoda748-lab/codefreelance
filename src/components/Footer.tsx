@@ -9,7 +9,7 @@ export default function Footer() {
   const { t } = useI18n();
   return (
     <footer className="mt-12 border-t border-line bg-white dark:border-slate-800 dark:bg-slate-950">
-      <div className="mx-auto grid max-w-[1280px] gap-8 px-4 py-10 sm:grid-cols-2 sm:px-6 lg:grid-cols-4">
+      <div className="mx-auto grid max-w-[1360px] gap-8 px-4 py-10 sm:grid-cols-2 sm:px-6 lg:grid-cols-4">
         <div className="lg:col-span-2">
           <Logo />
           <p className="mt-3 max-w-md text-sm text-ink-muted">{t.footer.tagline}</p>

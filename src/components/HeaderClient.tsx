@@ -23,17 +23,17 @@ export default function HeaderClient() {
     ...(user ? [{ href: "/dashboard", label: t.nav.dashboard }, { href: "/messages", label: t.nav.messages }] : [{ href: "/#how", label: t.nav.how }]),
     ...(user?.isAdmin ? [{ href: "/admin", label: t.nav.admin }] : []),
   ];
-  const navCls = (href: string) => `rounded-xl px-1 py-2 text-[15px] font-medium transition hover:text-brand-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-400 ${path === href || (href.length > 2 && path.startsWith(href + "/")) ? "text-brand-700" : "text-navy-800 dark:text-slate-300"}`;
+  const navCls = (href: string) => `whitespace-nowrap rounded-xl px-1 py-2 text-[14px] font-medium transition hover:text-brand-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-400 ${path === href || (href.length > 2 && path.startsWith(href + "/")) ? "text-brand-700" : "text-navy-800 dark:text-slate-300"}`;
   return (
     <header className="sticky top-0 z-50 border-b border-line bg-white/90 backdrop-blur-xl dark:border-slate-800 dark:bg-slate-950/85">
-      <div className="mx-auto flex max-w-[1280px] items-center justify-between gap-3 px-4 py-2.5 sm:px-6 sm:py-3">
-        <div className="flex items-center gap-10">
-          <Link href="/" className="flex min-h-[44px] items-center rounded-xl no-underline focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-400" aria-label="Home"><Logo /></Link>
-          <nav className="hidden items-center gap-8 xl:flex" aria-label="Main">
+      <div className="mx-auto flex max-w-[1360px] items-center justify-between gap-3 px-4 py-2.5 sm:px-6 sm:py-3">
+        <div className="flex items-center gap-5">
+          <Link href="/" className="flex shrink-0 min-h-[44px] items-center rounded-xl no-underline focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-400" aria-label="Home"><Logo /></Link>
+          <nav className="hidden items-center gap-4 xl:flex" aria-label="Main">
             {links.map((l) => <Link key={l.href} href={l.href} className={`no-underline ${navCls(l.href)}`}>{l.label}</Link>)}
           </nav>
         </div>
-        <div className="flex items-center gap-1 sm:gap-2">
+        <div className="flex shrink-0 items-center gap-1 sm:gap-2">
           <LangSwitch />
           <div className="hidden md:block"><ThemeToggle /></div>
           {user && <NotificationBell />}
@@ -47,7 +47,7 @@ export default function HeaderClient() {
           ) : (
             <Link href="/login" className="btn-secondary hidden no-underline xl:inline-flex">{t.nav.login}</Link>
           )}
-          <button type="button" onClick={openCreateProject} className="btn-primary hidden xl:inline-flex"><Plus className="h-4 w-4" aria-hidden />{t.nav.post}</button>
+          <button type="button" onClick={openCreateProject} title={t.nav.post} aria-label={t.nav.post} className="btn-primary hidden whitespace-nowrap xl:inline-flex"><Plus className="h-4 w-4" aria-hidden /><span className={user ? "hidden min-[1360px]:inline" : ""}>{t.nav.post}</span></button>
           {!user && <Link href="/login" className="icon-btn !border-transparent xl:hidden" aria-label={t.nav.login}><UserRound className="h-5 w-5" /></Link>}
           <button type="button" onClick={() => setMenu((m) => !m)} className="icon-btn !border-transparent xl:hidden" aria-label={menu ? t.nav.close : t.nav.menu} aria-expanded={menu} aria-controls="mobile-menu">
             {menu ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
