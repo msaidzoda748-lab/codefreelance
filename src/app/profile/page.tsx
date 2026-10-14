@@ -61,7 +61,7 @@ export default function MyProfilePage() {
   return (
     <div className="mx-auto max-w-3xl space-y-6 animate-slide-up">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-2xl font-extrabold text-ink sm:text-3xl">{t.prof.editTitle}</h1>
+        <h1 className="page-title">{t.prof.editTitle}</h1>
         {user && <Link href={`/freelancers/${user.id}`} className="btn-ghost no-underline">{t.prof.viewProfile}</Link>}
       </div>
       <form onSubmit={save} className="card space-y-4" noValidate>

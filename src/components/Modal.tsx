@@ -29,10 +29,11 @@ export default function Modal({ open, onClose, title, children }: { open: boolea
   if (!open || typeof document === "undefined") return null;
   return createPortal(
     <div className="fixed inset-0 z-[100] flex items-end justify-center sm:items-center sm:p-4">
-      <div className="absolute inset-0 animate-backdrop-in bg-slate-900/40 backdrop-blur-[2px]" onClick={onClose} aria-hidden />
+      <div className="absolute inset-0 animate-backdrop-in bg-slate-900/45 backdrop-blur-sm" onClick={onClose} aria-hidden />
       <div ref={ref} role="dialog" aria-modal="true" aria-labelledby={id}
         className="relative max-h-[92vh] w-full animate-modal-in overflow-y-auto rounded-t-[24px] bg-white p-5 pb-[calc(1.25rem+env(safe-area-inset-bottom))] shadow-2xl sm:max-w-lg sm:rounded-[24px] sm:p-6 dark:bg-slate-900">
-        <div className="mb-4 flex items-start justify-between gap-4">
+        <div className="mx-auto -mt-2 mb-3 h-1.5 w-10 rounded-full bg-slate-200 sm:hidden" aria-hidden />
+        <div className="mb-4 flex items-start justify-between gap-4 border-b border-line pb-4 dark:border-slate-800">
           <h2 id={id} className="text-lg font-bold text-ink dark:text-white">{title}</h2>
           <button type="button" onClick={onClose} className="icon-btn !h-10 !w-10 shrink-0" aria-label={t.nav.close}><X className="h-5 w-5" /></button>
         </div>

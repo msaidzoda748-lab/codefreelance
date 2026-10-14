@@ -6,6 +6,7 @@ import { errorText } from "@/i18n/format";
 import { api } from "@/lib/client";
 import Modal from "../Modal";
 import { TextArea, FormMessage } from "./Field";
+import { toast } from "./Toast";
 
 /**
  * Button that calls an API, optionally after a confirm dialog and/or a required text input (reason/comment).
@@ -28,8 +29,8 @@ export default function ActionButton({ url, method = "POST", body = {}, label, c
     setBusy(true); setError("");
     const r = await api<Record<string, unknown>>(url, { method, json: { ...body, ...(prompt ? { [prompt.field]: text } : {}), ...(extraCheckbox ? { [extraCheckbox.field]: check } : {}) } });
     setBusy(false);
-    if (!r.ok) return setError(errorText(t, r.error));
-    setOpen(false); setText("");
+    if (!r.ok) { if (!needsDialog) toast(errorText(t, r.error), "error"); return setError(errorText(t, r.error)); }
+    setOpen(false); setText(""); toast(`${label} — ${t.common.done}`);
     const v = redirectTo ? r.data[redirectTo.key] : null;
     const to = v ? `${redirectTo!.prefix}${v}` : null;
     if (to) router.push(to);

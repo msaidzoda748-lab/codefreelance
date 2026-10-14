@@ -43,7 +43,7 @@ export async function normalize(prisma, { userIds } = {}) {
     const order = await prisma.order.create({ data: {
       projectId: p.id, proposalId: pr.id, clientId: p.clientId, freelancerId: pr.freelancerId, price: pr.price, deadline: p.deadline,
       status: done ? "COMPLETED" : "IN_PROGRESS", completedAt: done ? p.updatedAt : null, createdAt: pr.updatedAt,
-      milestones: { create: { title: "Иҷрои лоиҳа", description: p.title, deadline: p.deadline, amount: pr.price, status: done ? "ACCEPTED" : "IN_PROGRESS" } },
+      milestones: { create: { title: ({ tj: "Иҷрои лоиҳа", ru: "Выполнение проекта", en: "Project delivery" })[p.language] || "Иҷрои лоиҳа", description: p.title, deadline: p.deadline, amount: pr.price, status: done ? "ACCEPTED" : "IN_PROGRESS" } },
     } });
     let conv = await prisma.conversation.findFirst({ where: { projectId: p.id, orderId: null, AND: [{ members: { some: { userId: p.clientId } } }, { members: { some: { userId: pr.freelancerId } } }] } });
     if (conv) conv = await prisma.conversation.update({ where: { id: conv.id }, data: { orderId: order.id } });

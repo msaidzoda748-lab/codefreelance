@@ -10,14 +10,14 @@ export default function FreelancerCard({ f }: { f: FreelancerCardData }) {
   const { t } = useI18n();
   const skills = f.skills.split(",").map((s) => s.trim()).filter(Boolean);
   return (
-    <article className="rounded-[20px] border border-line bg-white p-4 shadow-card transition duration-200 hover:-translate-y-0.5 hover:border-brand-200 hover:shadow-soft dark:border-slate-800 dark:bg-slate-900">
+    <article className="group rounded-[20px] border border-line bg-white p-4 shadow-card transition duration-200 hover:-translate-y-1 hover:border-brand-200 hover:shadow-lift dark:border-slate-800 dark:bg-slate-900">
       <div className="flex gap-3">
-        <div className="relative h-14 w-14 shrink-0 self-start [&_img]:h-14 [&_img]:w-14 [&>div]:h-14 [&>div]:w-14">
+        <div className="relative h-14 w-14 shrink-0 self-start [&_img]:h-14 [&_img]:w-14 [&_img]:ring-2 [&_img]:ring-brand-100 [&>div]:h-14 [&>div]:w-14">
           <Avatar name={f.name} src={f.avatarUrl} size="lg" />
-          <span className="absolute bottom-0 right-0 h-3.5 w-3.5 rounded-full bg-brand-500 ring-2 ring-white" aria-hidden />
+          <span className="absolute bottom-0 right-0 flex h-3.5 w-3.5" aria-hidden><span className="absolute inline-flex h-full w-full rounded-full bg-brand-400 opacity-60 motion-safe:animate-ping" /><span className="relative h-3.5 w-3.5 rounded-full bg-brand-500 ring-2 ring-white dark:ring-slate-900" /></span>
         </div>
         <div className="min-w-0 flex-1">
-          <h3 className="truncate text-[15px] font-bold text-ink dark:text-white">{f.name}</h3>
+          <h3 className="flex items-center gap-1 truncate text-[15px] font-bold text-ink dark:text-white">{f.name}<BadgeCheck className="h-4 w-4 shrink-0 fill-brand-500 text-white" aria-label={t.card.verified} /></h3>
           <p className="truncate text-sm text-ink-muted">{f.title}</p>
           <div className="mt-1 flex items-center gap-1 text-sm">
             <Star className="h-4 w-4 fill-amber-400 text-amber-400" aria-hidden />

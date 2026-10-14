@@ -22,10 +22,11 @@ export default function ProjectCard({ p, showStatus = false }: { p: ProjectCardD
   const skills = p.skills.split(",").map((s) => s.trim()).filter(Boolean);
   const ck = catKeyOf(p.category);
   return (
-    <article className="group flex flex-col overflow-hidden rounded-card border border-line bg-white shadow-card transition duration-200 hover:-translate-y-0.5 hover:border-brand-200 hover:shadow-soft sm:flex-row dark:border-slate-800 dark:bg-slate-900">
+    <article className="group flex flex-col overflow-hidden rounded-card border border-line bg-white shadow-card transition duration-200 hover:-translate-y-1 hover:border-brand-200 hover:shadow-lift sm:flex-row dark:hover:border-brand-800 dark:border-slate-800 dark:bg-slate-900">
       <Link href={`/projects/${p.id}`} className="relative block h-32 shrink-0 overflow-hidden bg-slate-100 sm:h-auto sm:w-[200px] lg:w-[220px]" tabIndex={-1} aria-hidden>
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={p.coverUrl || "/img/covers/website.svg"} alt="" className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.04]" />
+        <img src={p.coverUrl || "/img/covers/website.svg"} alt="" className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.05]" />
+        <span className="absolute inset-0 bg-gradient-to-t from-slate-900/25 via-transparent to-transparent opacity-0 transition duration-300 group-hover:opacity-100" />
         {showStatus && <span className="absolute left-3 top-3"><StatusBadge status={p.status} /></span>}
       </Link>
       <div className="flex min-w-0 flex-1 flex-col p-4 sm:p-5">
@@ -48,8 +49,8 @@ export default function ProjectCard({ p, showStatus = false }: { p: ProjectCardD
         </div>
         <div className="mt-auto flex flex-wrap items-end justify-between gap-3 pt-4">
           <div>
-            <div className="text-lg font-extrabold text-brand-600">{moneyRange(p, t)}</div>
-            <div className="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-ink-muted">
+            <div className="inline-flex items-baseline gap-1 rounded-xl bg-brand-50/80 px-2.5 py-1 text-lg font-extrabold tracking-tight text-brand-700 ring-1 ring-brand-100 dark:ring-brand-900">{moneyRange(p, t)}</div>
+            <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-ink-muted">
               <span className="inline-flex items-center gap-1"><Clock className="h-3.5 w-3.5" /><span suppressHydrationWarning>{timeAgoT(p.createdAt, t)}</span></span>
               <span className="inline-flex items-center gap-1"><MapPin className="h-3.5 w-3.5" />{p.city}</span>
               {typeof p.proposals === "number" && <span>{fmt(t.pl.proposals, { n: p.proposals })}</span>}

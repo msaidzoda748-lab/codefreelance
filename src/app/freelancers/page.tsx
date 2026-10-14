@@ -29,7 +29,7 @@ export default async function FreelancersPage({ searchParams }: { searchParams: 
   ]);
   return (
     <div className="animate-slide-up">
-      <h1 className="text-2xl font-extrabold tracking-tight text-ink sm:text-3xl">{t.prof.listTitle}</h1>
+      <h1 className="page-title">{t.prof.listTitle}</h1>
       <p className="mt-1 text-sm text-ink-muted" aria-live="polite">{fmt(t.prof.listFound, { n: total })}</p>
       <form role="search" className="my-5 flex max-w-2xl flex-wrap items-center gap-2 rounded-2xl border border-line bg-white p-2 shadow-soft">
         <Search className="ml-2 h-5 w-5 text-slate-400" aria-hidden />

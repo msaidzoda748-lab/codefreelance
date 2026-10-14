@@ -19,7 +19,7 @@ export default async function ProjectsPage({ searchParams }: { searchParams: Pro
     <div className="animate-slide-up">
       <div className="mb-5 flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-extrabold tracking-tight text-ink sm:text-3xl dark:text-white">{t.pl.title}</h1>
+          <h1 className="page-title">{t.pl.title}</h1>
           <p className="mt-1 text-sm text-ink-muted" aria-live="polite">{fmt(t.pl.found, { n: res.total })}</p>
         </div>
         <Link href="/projects/new" className="btn-primary hidden no-underline sm:inline-flex"><PlusCircle className="h-4 w-4" aria-hidden />{t.nav.post}</Link>

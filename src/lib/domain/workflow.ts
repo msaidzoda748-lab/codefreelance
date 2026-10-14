@@ -61,3 +61,9 @@ export function availableMilestoneActions(role: Role, status: MilestoneStatus, o
 export function canEditMilestones(role: Role, orderStatus: OrderStatus) {
   return role === "CLIENT" && (orderStatus === "NEGOTIATION" || ACTIVE_ORDER.includes(orderStatus));
 }
+
+/** Default title of the auto-created first milestone, per language. */
+export const DEFAULT_MILESTONE_TITLE: Record<string, string> = { tj: "Иҷрои лоиҳа", ru: "Выполнение проекта", en: "Project delivery" };
+export function defaultMilestoneTitle(lang?: string | null) { return DEFAULT_MILESTONE_TITLE[lang || "tj"] || DEFAULT_MILESTONE_TITLE.tj; }
+/** Show stored default titles in the viewer's language. */
+export function localizeMilestoneTitle(title: string, lang: string) { return Object.values(DEFAULT_MILESTONE_TITLE).includes(title) ? defaultMilestoneTitle(lang) : title; }

@@ -25,7 +25,7 @@ export default async function NotificationsPage({ searchParams }: { searchParams
   return (
     <div className="mx-auto max-w-3xl animate-slide-up">
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-2xl font-extrabold text-ink sm:text-3xl">{t.notif.title}</h1>
+        <h1 className="page-title">{t.notif.title}</h1>
         <div className="flex gap-2">
           <Link href={searchParams.unread ? "/notifications" : "/notifications?unread=1"} className="btn-ghost no-underline" aria-pressed={!!searchParams.unread}>{searchParams.unread ? t.common.all : t.notif.unreadOnly}</Link>
           {unread > 0 && <ActionButton url="/api/notifications" body={{ all: true }} label={t.notif.markAll} />}

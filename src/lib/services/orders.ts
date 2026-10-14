@@ -2,7 +2,7 @@ import { Prisma } from "@prisma/client";
 import { prisma } from "../prisma";
 import { ApiError } from "../api";
 import { notifyUser } from "../notifications";
-import { deriveOrderStatus, milestoneTransition, orderTransition, canEditMilestones, type MilestoneAction, type MilestoneStatus, type OrderStatus } from "../domain/workflow";
+import { deriveOrderStatus, milestoneTransition, orderTransition, canEditMilestones, defaultMilestoneTitle, type MilestoneAction, type MilestoneStatus, type OrderStatus } from "../domain/workflow";
 import { roleInOrder } from "../domain/authz";
 
 const DAY = 86400000;
@@ -26,11 +26,12 @@ export async function hireProposal(clientId: string, projectId: string, proposal
       await tx.proposal.update({ where: { id: proposalId }, data: { status: "ACCEPTED" } });
       const rejected = await tx.proposal.findMany({ where: { projectId, status: "SENT", id: { not: proposalId } }, select: { id: true, freelancerId: true } });
       await tx.proposal.updateMany({ where: { id: { in: rejected.map((r) => r.id) } }, data: { status: "REJECTED" } });
+      const client = await tx.user.findUnique({ where: { id: clientId }, select: { uiLanguage: true } });
       const deadline = new Date(Math.max(Date.now() + proposal.deliveryDays * DAY, Date.now() + DAY));
       const order = await tx.order.create({
         data: {
           projectId, proposalId, clientId, freelancerId: proposal.freelancerId, price: proposal.price, status: "NEGOTIATION", deadline,
-          milestones: { create: { title: "Иҷрои лоиҳа", description: project.title, deadline, amount: proposal.price, status: "PENDING" } },
+          milestones: { create: { title: defaultMilestoneTitle(client?.uiLanguage), description: project.title, deadline, amount: proposal.price, status: "PENDING" } },
           conversation: { create: { projectId, members: { create: [{ userId: clientId }, { userId: proposal.freelancerId }] } } },
         },
       });

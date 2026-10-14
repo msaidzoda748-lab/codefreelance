@@ -6,7 +6,7 @@ import { getCurrentUser } from "@/lib/auth";
 import { getDict, getLang } from "@/i18n/server";
 import { fdate, fdatetime, fmt, money } from "@/i18n/format";
 import { roleInOrder, canReview } from "@/lib/domain/authz";
-import { availableMilestoneActions, canEditMilestones, type MilestoneStatus, type OrderStatus } from "@/lib/domain/workflow";
+import { availableMilestoneActions, canEditMilestones, localizeMilestoneTitle, type MilestoneStatus, type OrderStatus } from "@/lib/domain/workflow";
 import StatusBadge from "@/components/StatusBadge";
 import Avatar from "@/components/Avatar";
 import Stars from "@/components/Stars";
@@ -73,14 +73,30 @@ export default async function OrderPage({ params }: { params: { id: string } }) 
           <h2 id="ms-h" className="text-lg font-bold text-ink">{t.ord.milestones}</h2>
           {role === "CLIENT" && canEditMilestones("CLIENT", status) && <MilestoneForm orderId={order.id} />}
         </div>
-        <ol className="space-y-3" data-testid="milestones">
+        {status !== "CANCELLED" && (() => {
+          const steps = ["NEGOTIATION", "IN_PROGRESS", "IN_REVIEW", "COMPLETED"];
+          const cur = Math.max(0, steps.indexOf(status === "REVISION_REQUESTED" ? "IN_PROGRESS" : status));
+          return (
+            <ol className="card flex items-center gap-1 !p-3 sm:!p-4" aria-label={t.common.status}>
+              {steps.map((st, k) => (
+                <li key={st} className="flex flex-1 items-center gap-1" aria-current={k === cur ? "step" : undefined}>
+                  <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-bold transition ${k < cur ? "bg-brand-600 text-white" : k === cur ? "bg-brand-50 text-brand-700 ring-2 ring-brand-500" : "bg-slate-100 text-slate-400"}`}>{k < cur ? "✓" : k + 1}</span>
+                  <span className={`hidden truncate text-xs font-semibold sm:block ${k <= cur ? "text-ink" : "text-ink-muted"}`}><StatusBadge status={st} /></span>
+                  {k < steps.length - 1 && <span className={`mx-1 h-0.5 flex-1 rounded-full ${k < cur ? "bg-brand-500" : "bg-slate-200"}`} aria-hidden />}
+                </li>
+              ))}
+            </ol>
+          );
+        })()}
+        <ol className="relative space-y-3 pl-9 before:absolute before:bottom-4 before:left-[13px] before:top-4 before:w-0.5 before:rounded-full before:bg-gradient-to-b before:from-brand-400 before:to-slate-200" data-testid="milestones">
           {order.milestones.map((m, i) => {
             const acts = role ? availableMilestoneActions(role, m.status as MilestoneStatus, status) : [];
             return (
-              <li key={m.id} className="card" data-testid={`ms-${i}`}>
+              <li key={m.id} className="card relative" data-testid={`ms-${i}`}>
+                <span className={`absolute -left-9 top-5 flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold ring-4 ring-white dark:ring-slate-950 ${m.status === "ACCEPTED" ? "bg-brand-600 text-white" : m.status === "SUBMITTED" ? "bg-sky-500 text-white" : m.status === "CANCELLED" ? "bg-slate-300 text-white" : m.status === "REVISION_REQUESTED" ? "bg-amber-500 text-white" : "bg-white text-brand-700 ring-brand-100 border-2 border-brand-500 dark:bg-slate-900"}`} aria-hidden>{m.status === "ACCEPTED" ? "✓" : i + 1}</span>
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div className="min-w-0">
-                    <h3 className="font-bold text-ink">{i + 1}. {m.title}</h3>
+                    <h3 className="font-bold text-ink">{i + 1}. {localizeMilestoneTitle(m.title, lang)}</h3>
                     {m.description && <p className="mt-1 whitespace-pre-line text-sm text-ink-muted">{m.description}</p>}
                     <p className="mt-1 text-xs text-ink-muted">{t.ord.mDeadline}: {fdate(m.deadline, lang)}{m.amount != null && ` · ${money(m.amount, t)}`}</p>
                   </div>

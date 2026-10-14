@@ -43,9 +43,13 @@ const config: Config = {
       boxShadow: {
         soft: "0 4px 24px -4px rgba(5, 150, 105, 0.10), 0 2px 8px -2px rgba(15, 23, 42, 0.06)",
         glow: "0 0 40px -8px rgba(5, 150, 105, 0.30)",
-        card: "0 1px 2px rgba(15,23,42,0.04), 0 8px 24px -8px rgba(15,23,42,0.12)",
+        card: "0 1px 2px rgba(15,23,42,0.04), 0 8px 24px -8px rgba(15,23,42,0.10)",
+        lift: "0 2px 4px rgba(15,23,42,0.04), 0 18px 40px -12px rgba(5,150,105,0.22)",
+        glass: "inset 0 1px 0 rgba(255,255,255,.6), 0 10px 30px -10px rgba(15,23,42,.18)",
       },
       backgroundImage: {
+        "brand-mesh":
+          "radial-gradient(60% 60% at 15% 10%, rgba(16,185,129,.16) 0, transparent 60%), radial-gradient(50% 50% at 90% 0%, rgba(52,211,153,.18) 0, transparent 60%), radial-gradient(40% 50% at 80% 90%, rgba(168,85,247,.10) 0, transparent 60%)",
         "hero-gradient":
           "linear-gradient(135deg, #065f46 0%, #059669 50%, #34d399 100%)",
         "mesh":
@@ -58,6 +62,10 @@ const config: Config = {
         "backdrop-in": "fadeIn 0.2s ease-out both",
         "fade-in": "fadeIn 0.5s ease-out both",
         "slide-up": "slideUp 0.5s ease-out both",
+        float: "float 6s ease-in-out infinite",
+        "float-slow": "float 8s ease-in-out 1s infinite",
+        shimmer: "shimmer 1.4s linear infinite",
+        "toast-in": "toastIn 0.22s cubic-bezier(.2,.8,.2,1) both",
       },
       keyframes: {
         modalIn: {
@@ -68,6 +76,9 @@ const config: Config = {
           "0%": { opacity: "0" },
           "100%": { opacity: "1" },
         },
+        float: { "0%,100%": { transform: "translateY(0)" }, "50%": { transform: "translateY(-10px)" } },
+        shimmer: { "0%": { backgroundPosition: "-400px 0" }, "100%": { backgroundPosition: "400px 0" } },
+        toastIn: { "0%": { opacity: "0", transform: "translateY(12px) scale(.98)" }, "100%": { opacity: "1", transform: "none" } },
         slideUp: {
           "0%": { opacity: "0", transform: "translateY(12px)" },
           "100%": { opacity: "1", transform: "translateY(0)" },

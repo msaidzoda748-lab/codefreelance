@@ -5,6 +5,7 @@ import "./globals.css";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import BottomNavigation from "@/components/BottomNavigation";
+import Toaster from "@/components/ui/Toast";
 import CreateProjectModal from "@/components/CreateProjectModal";
 import { I18nProvider, type SessionUser } from "@/i18n/I18nProvider";
 import { getLang } from "@/i18n/server";
@@ -34,6 +35,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           <main id="main" className="page-shell min-h-[calc(100vh-10rem)] animate-fade-in">{children}</main>
           <Footer />
           <BottomNavigation />
+          <Toaster />
           <CreateProjectModal />
         </I18nProvider>
       </body>

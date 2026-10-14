@@ -6,7 +6,6 @@ import { CheckCircle2, Rocket } from "lucide-react";
 import Modal from "./Modal";
 import AuthPrompt from "./AuthPrompt";
 import { useI18n } from "@/i18n/I18nProvider";
-import { CATEGORIES } from "@/lib/utils";
 
 export const OPEN_CREATE_EVENT = "cf:create-project";
 export function openCreateProject() { window.dispatchEvent(new Event(OPEN_CREATE_EVENT)); }
@@ -14,7 +13,9 @@ export function openCreateProject() { window.dispatchEvent(new Event(OPEN_CREATE
 type Errors = Partial<Record<"title" | "description" | "budget" | "deadline", string>>;
 
 export default function CreateProjectModal() {
-  const { t, user } = useI18n();
+  const { t, user, lang } = useI18n();
+  const [cats, setCats] = useState<{ id: string; nameTj: string; nameRu: string; nameEn: string }[]>([]);
+  const [mode, setMode] = useState<"fixed" | "range">("fixed");
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [errors, setErrors] = useState<Errors>({});
@@ -23,10 +24,13 @@ export default function CreateProjectModal() {
   const [createdId, setCreatedId] = useState("");
 
   useEffect(() => {
-    const h = () => setOpen(true);
+    const h = () => {
+      setOpen(true);
+      if (!cats.length) fetch("/api/categories").then((r) => r.json()).then((d) => setCats(d.items || [])).catch(() => {});
+    };
     window.addEventListener(OPEN_CREATE_EVENT, h);
     return () => window.removeEventListener(OPEN_CREATE_EVENT, h);
-  }, []);
+  }, [cats.length]);
   const close = () => { setOpen(false); setTimeout(() => { setCreatedId(""); setErrors({}); setServerError(""); }, 200); };
 
   async function submit(e: React.FormEvent<HTMLFormElement>) {
@@ -35,18 +39,20 @@ export default function CreateProjectModal() {
     const title = String(fd.get("title") || "").trim();
     const description = String(fd.get("description") || "").trim();
     const budget = Number(fd.get("budget"));
+    const budgetMin = Number(fd.get("budgetMin"));
+    const budgetMax = Number(fd.get("budgetMax"));
     const deadlineStr = String(fd.get("deadline") || "");
     const deadline = new Date(deadlineStr);
     const errs: Errors = {};
     if (title.length < 5) errs.title = t.create.errName;
     if (description.length < 20) errs.description = t.create.errDesc;
-    if (!budget || budget < 1 || !Number.isInteger(budget)) errs.budget = t.create.errBudget;
+    if (mode === "fixed" ? (!budget || budget < 1 || !Number.isInteger(budget)) : (!(budgetMin >= 1) || !Number.isInteger(budgetMin) || !Number.isInteger(budgetMax) || budgetMax < budgetMin)) errs.budget = t.create.errBudget;
     if (isNaN(deadline.getTime()) || deadline <= new Date(new Date().toDateString())) errs.deadline = t.create.errDeadline;
     setErrors(errs);
     if (Object.keys(errs).length) return;
     setLoading(true); setServerError("");
     try {
-      const res = await fetch("/api/projects", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ title, description, category: fd.get("category"), budget, deadline: deadlineStr, skills: "" }) });
+      const res = await fetch("/api/projects", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ title, description, categoryId: fd.get("categoryId"), budgetMode: mode, budget, budgetMin, budgetMax, deadline: deadlineStr, language: lang, skills: "" }) });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) { setServerError(data.error || `HTTP ${res.status}`); return; }
       setCreatedId(data.id);
@@ -80,19 +86,30 @@ export default function CreateProjectModal() {
           </div>
           <div>
             <label htmlFor="cp-cat" className="label">{t.create.category}</label>
-            <select id="cp-cat" name="category" className="input">{CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}</select>
+            <select id="cp-cat" name="categoryId" className="input" required>{cats.map((c) => <option key={c.id} value={c.id}>{lang === "ru" ? c.nameRu : lang === "en" ? c.nameEn : c.nameTj}</option>)}</select>
           </div>
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div>
-              <label htmlFor="cp-budget" className="label">{t.create.budget}</label>
-              <input id="cp-budget" name="budget" type="number" inputMode="numeric" min={1} className="input" aria-invalid={!!errors.budget} aria-describedby="cp-budget-err" />
-              {errors.budget && <p id="cp-budget-err" className="field-error">{errors.budget}</p>}
+          <fieldset>
+            <legend className="label">{t.pf.budgetMode}</legend>
+            <div role="radiogroup" className="mb-3 inline-flex rounded-xl bg-slate-100 p-1 dark:bg-slate-800">
+              {(["fixed", "range"] as const).map((m) => <button key={m} type="button" role="radio" aria-checked={mode === m} onClick={() => setMode(m)} className={`min-h-[36px] rounded-lg px-4 text-sm font-semibold transition duration-200 ${mode === m ? "bg-white text-brand-700 shadow dark:bg-slate-700 dark:text-white" : "text-ink-muted"}`}>{t.pf[m]}</button>)}
             </div>
-            <div>
+            {mode === "fixed" ? (
+              <div>
+                <label htmlFor="cp-budget" className="label">{t.create.budget}</label>
+                <input id="cp-budget" name="budget" type="number" inputMode="numeric" min={1} className="input" aria-invalid={!!errors.budget} aria-describedby="cp-budget-err" />
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 gap-3">
+                <div><label htmlFor="cp-bmin" className="label">{t.pf.budgetMin}</label><input id="cp-bmin" name="budgetMin" type="number" inputMode="numeric" min={1} className="input" aria-invalid={!!errors.budget} aria-describedby="cp-budget-err" /></div>
+                <div><label htmlFor="cp-bmax" className="label">{t.pf.budgetMax}</label><input id="cp-bmax" name="budgetMax" type="number" inputMode="numeric" min={1} className="input" aria-invalid={!!errors.budget} aria-describedby="cp-budget-err" /></div>
+              </div>
+            )}
+            {errors.budget && <p id="cp-budget-err" className="field-error">{errors.budget}</p>}
+          </fieldset>
+          <div>
               <label htmlFor="cp-deadline" className="label">{t.create.deadline}</label>
               <input id="cp-deadline" name="deadline" type="date" className="input" aria-invalid={!!errors.deadline} aria-describedby="cp-deadline-err" />
               {errors.deadline && <p id="cp-deadline-err" className="field-error">{errors.deadline}</p>}
-            </div>
           </div>
           {serverError && <p role="alert" className="rounded-xl bg-rose-50 p-3 text-sm text-rose-700">{serverError}</p>}
           <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">

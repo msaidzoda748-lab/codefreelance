@@ -6,6 +6,7 @@ import { fdatetime, fmt } from "@/i18n/format";
 import { api } from "@/lib/client";
 import FileUploader, { AttachmentList, type UploadedFile } from "./ui/FileUploader";
 import Avatar from "./Avatar";
+import { SkeletonList } from "./ui/States";
 
 type Att = { id: string; name: string; mimeType: string; size: number; url: string };
 type Msg = { id: string; body: string; hidden?: boolean; createdAt: string; senderId: string; clientMessageId: string | null; sender: { id: string; name: string; avatarUrl: string | null }; attachments: Att[]; state?: "sending" | "failed" };
@@ -103,11 +104,11 @@ export default function ChatBox({ conversationId, me, other }: { conversationId:
   const lastMine = [...msgs].reverse().find((m) => m.senderId === me.id && !m.state);
 
   return (
-    <div className="flex h-[calc(100dvh-15rem)] min-h-[420px] flex-col overflow-hidden rounded-2xl border border-line bg-white lg:h-[calc(100dvh-12rem)]">
+    <div className="flex h-[calc(100dvh-15rem)] min-h-[420px] flex-col overflow-hidden rounded-card border border-line bg-white shadow-card dark:border-slate-800 dark:bg-slate-900 lg:h-[calc(100dvh-12rem)]">
       <div ref={listRef} onScroll={(e) => { const el = e.currentTarget; stick.current = el.scrollHeight - el.scrollTop - el.clientHeight < 80; }}
-        className="flex-1 space-y-3 overflow-y-auto bg-slate-50/60 p-3 sm:p-4" role="log" aria-live="polite" aria-label={t.chat.title} data-testid="chat-log">
+        className="flex-1 space-y-3 overflow-y-auto bg-[radial-gradient(circle_at_1px_1px,rgba(15,23,42,.05)_1px,transparent_0)] [background-size:18px_18px] p-3 sm:p-5 dark:bg-slate-950/40" role="log" aria-live="polite" aria-label={t.chat.title} data-testid="chat-log">
         {hasMore && <div className="text-center"><button type="button" onClick={older} className="btn-ghost text-xs" data-testid="older">{t.chat.older}</button></div>}
-        {loading && <p className="py-8 text-center text-sm text-ink-muted">{t.common.loading}</p>}
+        {loading && <div className="p-2"><SkeletonList rows={4} label={t.common.loading} /></div>}
         {loadErr && <p role="alert" className="py-8 text-center text-sm text-rose-600">{t.common.error}</p>}
         {!loading && !loadErr && !msgs.length && <p className="py-12 text-center text-sm text-ink-muted">{t.chat.noMessages}</p>}
         {msgs.map((m) => {
@@ -116,7 +117,7 @@ export default function ChatBox({ conversationId, me, other }: { conversationId:
           return (
             <div key={m.clientMessageId || m.id} className={`flex items-end gap-2 ${mine ? "justify-end" : ""}`} data-testid="msg">
               {!mine && <Avatar name={m.sender.name} src={m.sender.avatarUrl} size="sm" />}
-              <div className={`max-w-[82%] rounded-2xl px-3.5 py-2.5 text-sm shadow-sm sm:max-w-[70%] ${mine ? "rounded-br-md bg-brand-600 text-white" : "rounded-bl-md bg-white text-ink ring-1 ring-line"}`}>
+              <div className={`max-w-[82%] rounded-2xl px-3.5 py-2.5 text-sm shadow-sm sm:max-w-[70%] ${mine ? "rounded-br-md bg-gradient-to-br from-brand-500 to-brand-700 text-white shadow-[0_8px_20px_-10px_rgba(5,150,105,.7)]" : "rounded-bl-md bg-white text-ink ring-1 ring-line dark:bg-slate-800 dark:ring-slate-700"}`}>
                 {m.hidden ? <em className="opacity-70">{t.chat.hidden}</em> : <>
                   {m.body && <p className="whitespace-pre-wrap break-words">{m.body}</p>}
                   {m.attachments.length > 0 && <div className="mt-2 [&_a]:bg-white/90"><AttachmentList files={m.attachments} /></div>}
@@ -134,14 +135,14 @@ export default function ChatBox({ conversationId, me, other }: { conversationId:
         {lastMine && readAt && new Date(readAt) >= new Date(lastMine.createdAt) && <p className="text-right text-[11px] text-ink-muted">{t.chat.read}</p>}
         {typing && <p className="text-xs italic text-ink-muted">{fmt(t.chat.typing, { name: typing })}</p>}
       </div>
-      <form onSubmit={send} className="border-t border-line bg-white p-2 sm:p-3">
+      <form onSubmit={send} className="border-t border-line bg-white/90 p-2 backdrop-blur sm:p-3 dark:border-slate-800 dark:bg-slate-900/90">
         {showFiles && <div className="mb-2"><FileUploader kind="chat" files={files} onChange={setFiles} /></div>}
-        <div className="flex items-end gap-2">
+        <div className="flex items-end gap-2 rounded-2xl border border-line bg-slate-50 p-1.5 transition focus-within:border-brand-400 focus-within:ring-4 focus-within:ring-brand-500/10 dark:border-slate-700 dark:bg-slate-800">
           <button type="button" onClick={() => setShowFiles((v) => !v)} aria-expanded={showFiles} aria-label={t.chat.attach} className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-slate-500 hover:bg-slate-100"><Paperclip className="h-5 w-5" aria-hidden /></button>
           <label htmlFor="chat-input" className="sr-only">{t.chat.placeholder}</label>
           <textarea id="chat-input" rows={1} value={text} onChange={(e) => onType(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); } }}
-            placeholder={other ? `${t.chat.placeholder}` : t.chat.placeholder} maxLength={5000} className="input max-h-32 min-h-[44px] flex-1 resize-none" data-testid="chat-input" />
-          <button type="submit" className="btn-primary h-11 w-11 shrink-0 !p-0" aria-label={t.chat.send} disabled={!text.trim() && !files.length} data-testid="chat-send"><Send className="h-4 w-4" aria-hidden /></button>
+            placeholder={other ? `${t.chat.placeholder}` : t.chat.placeholder} maxLength={5000} className="max-h-32 min-h-[44px] flex-1 resize-none bg-transparent px-2 py-2.5 text-sm text-ink outline-none placeholder:text-slate-400 dark:text-white" data-testid="chat-input" />
+          <button type="submit" className="btn-primary h-11 w-11 shrink-0 !rounded-xl !p-0" aria-label={t.chat.send} disabled={!text.trim() && !files.length} data-testid="chat-send"><Send className="h-4 w-4" aria-hidden /></button>
         </div>
       </form>
     </div>
