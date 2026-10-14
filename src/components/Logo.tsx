@@ -12,9 +12,9 @@ export function LogoMark({ className = "h-9 w-9" }: { className?: string }) {
 
 export default function Logo() {
   return (
-    <span className="flex items-center gap-2.5">
-      <LogoMark />
-      <span className="text-[19px] sm:text-[22px] font-extrabold tracking-tight">
+    <span className="flex items-center gap-2 sm:gap-2.5">
+      <LogoMark className="h-8 w-8 sm:h-9 sm:w-9" />
+      <span className="text-[17px] min-[400px]:text-[19px] sm:text-[22px] font-extrabold tracking-tight">
         <span className="text-navy-900 dark:text-white">{SITE.nameParts[0]}</span>
         <span className="text-brand-600">{SITE.nameParts[1]}</span>
       </span>

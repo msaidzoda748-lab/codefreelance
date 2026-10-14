@@ -26,20 +26,20 @@ export default function HeaderClient() {
   const navCls = (href: string) => `whitespace-nowrap rounded-xl px-1 py-2 text-[14px] font-medium transition hover:text-brand-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-400 ${path === href || (href.length > 2 && path.startsWith(href + "/")) ? "text-brand-700" : "text-navy-800 dark:text-slate-300"}`;
   return (
     <header className="sticky top-0 z-50 border-b border-line bg-white/90 backdrop-blur-xl dark:border-slate-800 dark:bg-slate-950/85">
-      <div className="mx-auto flex max-w-[1360px] items-center justify-between gap-3 px-4 py-2.5 sm:px-6 sm:py-3">
-        <div className="flex items-center gap-5">
+      <div className="mx-auto flex max-w-[1360px] items-center justify-between gap-2 px-3 sm:gap-3 sm:px-4 py-2.5 sm:px-6 sm:py-3">
+        <div className="flex min-w-0 items-center gap-5">
           <Link href="/" className="flex shrink-0 min-h-[44px] items-center rounded-xl no-underline focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-400" aria-label="Home"><Logo /></Link>
           <nav className="hidden items-center gap-4 xl:flex" aria-label="Main">
             {links.map((l) => <Link key={l.href} href={l.href} className={`no-underline ${navCls(l.href)}`}>{l.label}</Link>)}
           </nav>
         </div>
-        <div className="flex shrink-0 items-center gap-1 sm:gap-2">
+        <div className="flex shrink-0 items-center gap-0.5 sm:gap-2">
           <LangSwitch />
           <div className="hidden md:block"><ThemeToggle /></div>
           {user && <NotificationBell />}
           {user ? (
             <>
-              <Link href="/account" aria-label={t.nav.account} className="rounded-full p-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-400"><Avatar name={user.name} src={user.avatarUrl} size="sm" /></Link>
+              <Link href="/account" aria-label={t.nav.account} className="hidden rounded-full p-1 sm:inline-flex focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-400"><Avatar name={user.name} src={user.avatarUrl} size="sm" /></Link>
               <form action="/api/auth/logout" method="POST" className="hidden md:block">
                 <button type="submit" className="icon-btn !border-transparent" aria-label={t.nav.logout} title={t.nav.logout}><LogOut className="h-4 w-4" /></button>
               </form>
@@ -58,6 +58,7 @@ export default function HeaderClient() {
         <div id="mobile-menu" className="animate-fade-in border-t border-line bg-white px-4 pb-4 pt-2 xl:hidden dark:border-slate-800 dark:bg-slate-950">
           <nav className="flex flex-col" aria-label="Mobile">
             {links.map((l) => <Link key={l.href} href={l.href} className={`flex min-h-[48px] items-center no-underline ${navCls(l.href)}`}>{l.label}</Link>)}
+            {user && <Link href="/account" className={`flex min-h-[48px] items-center no-underline sm:hidden ${navCls("/account")}`}>{t.nav.account}</Link>}
             {user && <Link href="/notifications" className={`flex min-h-[48px] items-center no-underline ${navCls("/notifications")}`}>{t.nav.notifications}</Link>}
           </nav>
           <div className="mt-2 grid gap-2">
