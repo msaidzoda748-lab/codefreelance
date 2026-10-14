@@ -28,7 +28,7 @@ export default function HeaderClient() {
     <header className="sticky top-0 z-50 border-b border-line bg-white/90 backdrop-blur-xl dark:border-slate-800 dark:bg-slate-950/85">
       <div className="mx-auto flex max-w-[1280px] items-center justify-between gap-3 px-4 py-2.5 sm:px-6 sm:py-3">
         <div className="flex items-center gap-10">
-          <Link href="/" className="rounded-xl no-underline focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-400" aria-label="Home"><Logo /></Link>
+          <Link href="/" className="flex min-h-[44px] items-center rounded-xl no-underline focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-400" aria-label="Home"><Logo /></Link>
           <nav className="hidden items-center gap-8 xl:flex" aria-label="Main">
             {links.map((l) => <Link key={l.href} href={l.href} className={`no-underline ${navCls(l.href)}`}>{l.label}</Link>)}
           </nav>

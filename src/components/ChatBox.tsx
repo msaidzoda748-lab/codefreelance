@@ -104,7 +104,7 @@ export default function ChatBox({ conversationId, me, other }: { conversationId:
   const lastMine = [...msgs].reverse().find((m) => m.senderId === me.id && !m.state);
 
   return (
-    <div className="flex h-[calc(100dvh-15rem)] min-h-[420px] flex-col overflow-hidden rounded-card border border-line bg-white shadow-card dark:border-slate-800 dark:bg-slate-900 lg:h-[calc(100dvh-12rem)]">
+    <div className="flex h-[calc(100dvh-12.5rem)] min-h-[260px] md:h-[calc(100dvh-15rem)] flex-col overflow-hidden rounded-card border border-line bg-white shadow-card dark:border-slate-800 dark:bg-slate-900 lg:h-[calc(100dvh-12rem)]">
       <div ref={listRef} onScroll={(e) => { const el = e.currentTarget; stick.current = el.scrollHeight - el.scrollTop - el.clientHeight < 80; }}
         className="flex-1 space-y-3 overflow-y-auto bg-[radial-gradient(circle_at_1px_1px,rgba(15,23,42,.05)_1px,transparent_0)] [background-size:18px_18px] p-3 sm:p-5 dark:bg-slate-950/40" role="log" aria-live="polite" aria-label={t.chat.title} data-testid="chat-log">
         {hasMore && <div className="text-center"><button type="button" onClick={older} className="btn-ghost text-xs" data-testid="older">{t.chat.older}</button></div>}
@@ -127,7 +127,7 @@ export default function ChatBox({ conversationId, me, other }: { conversationId:
                   {m.state === "sending" && <Clock className="h-3 w-3" aria-label={t.chat.sending} />}
                   {mine && !m.state && (read ? <CheckCheck className="h-3.5 w-3.5" aria-label={t.chat.read} /> : <Check className="h-3.5 w-3.5" aria-label={t.chat.delivered} />)}
                 </div>
-                {m.state === "failed" && <button type="button" onClick={() => retry(m)} className="mt-1 inline-flex min-h-[32px] items-center gap-1 rounded-lg bg-rose-500 px-2 text-xs font-semibold text-white" data-testid="retry"><AlertCircle className="h-3.5 w-3.5" aria-hidden />{t.chat.failed}<RotateCw className="h-3 w-3" aria-hidden /></button>}
+                {m.state === "failed" && <button type="button" onClick={() => retry(m)} className="mt-1 inline-flex min-h-[44px] sm:min-h-[32px] items-center gap-1 rounded-lg bg-rose-500 px-2 text-xs font-semibold text-white" data-testid="retry"><AlertCircle className="h-3.5 w-3.5" aria-hidden />{t.chat.failed}<RotateCw className="h-3 w-3" aria-hidden /></button>}
               </div>
             </div>
           );

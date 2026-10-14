@@ -40,7 +40,7 @@ export default async function NotificationsPage({ searchParams }: { searchParams
                 {n.link ? <Link href={n.link} className="break-words text-sm text-ink no-underline hover:text-brand-700">{notifText(t, n)}</Link> : <p className="break-words text-sm">{notifText(t, n)}</p>}
                 <p className="mt-1 text-xs text-ink-muted">{fdatetime(n.createdAt, lang)}</p>
               </div>
-              {!n.read && <ActionButton url="/api/notifications" body={{ ids: [n.id] }} label={t.notif.markRead} className="btn-ghost !min-h-[36px] !px-2 text-xs" />}
+              {!n.read && <ActionButton url="/api/notifications" body={{ ids: [n.id] }} label={t.notif.markRead} className="btn-ghost !min-h-[44px] sm:!min-h-[36px] !px-2 text-xs" />}
             </li>
           ))}
         </ul>

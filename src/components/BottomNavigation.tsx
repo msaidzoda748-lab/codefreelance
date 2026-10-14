@@ -1,18 +1,23 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useEffect } from "react";
 import { Briefcase, Home, MessageCircle, UserRound } from "lucide-react";
 import { useI18n } from "@/i18n/I18nProvider";
 
 export default function BottomNavigation() {
   const { t, user } = useI18n();
   const path = usePathname() || "/";
+  // Full-height chat screens hide the bottom nav so the composer sits at the bottom (above the keyboard).
+  const inChat = /^\/messages\/[^/]+/.test(path);
+  useEffect(() => { document.body.toggleAttribute("data-chat", inChat); return () => document.body.removeAttribute("data-chat"); }, [inChat]);
   const items = [
     { href: "/", label: t.bottom.home, icon: Home, active: path === "/" },
     { href: "/projects", label: t.bottom.projects, icon: Briefcase, active: path.startsWith("/projects") },
     { href: user ? "/messages" : "/login?next=/messages", label: t.bottom.messages, icon: MessageCircle, active: path.startsWith("/messages") },
     { href: user ? "/dashboard" : "/login?next=/dashboard", label: t.bottom.profile, icon: UserRound, active: ["/dashboard", "/profile", "/account", "/orders", "/login"].some((x) => path.startsWith(x)) },
   ];
+  if (inChat) return null;
   return (
     <nav aria-label="Bottom" className="fixed inset-x-0 bottom-0 z-50 border-t border-line bg-white/90 shadow-[0_-8px_24px_-12px_rgba(15,23,42,.15)] pb-[env(safe-area-inset-bottom)] backdrop-blur-xl md:hidden dark:border-slate-800 dark:bg-slate-950/95">
       <ul className="mx-auto grid h-[64px] max-w-md grid-cols-4">

@@ -50,7 +50,7 @@ export default function NotificationBell() {
         <div className="absolute right-0 z-50 mt-2 w-[min(22rem,calc(100vw-2rem))] overflow-hidden rounded-2xl border border-line bg-white shadow-soft">
           <div className="flex items-center justify-between border-b border-line px-4 py-3">
             <span className="font-bold">{t.notif.title}</span>
-            {unread > 0 && <button type="button" onClick={markAll} className="min-h-[36px] text-xs font-semibold text-brand-700">{t.notif.markAll}</button>}
+            {unread > 0 && <button type="button" onClick={markAll} className="min-h-[44px] sm:min-h-[36px] text-xs font-semibold text-brand-700">{t.notif.markAll}</button>}
           </div>
           <ul className="max-h-80 overflow-y-auto">
             {!items.length && <li className="px-4 py-8 text-center text-sm text-ink-muted">{t.notif.empty}</li>}

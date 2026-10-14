@@ -1,0 +1,54 @@
+360 home small: A:Skip to content=1x1, A:Home=171x36
+360 projects small: A:Skip to content=1x1, A:Home=171x36
+360 project small: A:Skip to content=1x1, A:Home=171x36, A:brief-autosalon.sv=157x36, BUTTON:Шикоят=80x36
+360 freelancers small: A:Skip to content=1x1, A:Home=171x36
+360 profile small: A:Skip to content=1x1, A:Home=171x36
+360 works small: A:Skip to content=1x1, A:Home=171x36
+360 work small: A:Skip to content=1x1, A:Home=171x36, A:Корҳо=63x20
+360 worknew small: A:Skip to content=1x1, A:Home=171x36
+360 login small: A:Skip to content=1x1, A:Home=171x36
+360 register small: A:Skip to content=1x1, A:Home=171x36
+360 dashboard small: A:Skip to content=1x1, A:Home=171x36
+360 messages small: A:Skip to content=1x1, A:Home=171x36
+360 chat small: A:Skip to content=1x1, A:Home=171x36, A:Ҷамшед Ҳакимов=180x32
+360 orders small: A:Skip to content=1x1, A:Home=171x36, A:maket-v1.svg=122x36, BUTTON:Таҳрир=81x36
+360 notifications small: A:Skip to content=1x1, A:Home=171x36, BUTTON:Хонда шуд=81x36, BUTTON:Хонда шуд=81x36, BUTTON:Хонда шуд=81x36
+360 newproject small: A:Skip to content=1x1, A:Home=171x36
+360 account small: A:Skip to content=1x1, A:Home=171x36
+360 admin small: A:Skip to content=1x1, A:Home=171x36
+390 home small: A:Skip to content=1x1, A:Home=171x36
+390 projects small: A:Skip to content=1x1, A:Home=171x36
+390 project small: A:Skip to content=1x1, A:Home=171x36, A:brief-autosalon.sv=157x36, BUTTON:Шикоят=80x36
+390 freelancers small: A:Skip to content=1x1, A:Home=171x36
+390 profile small: A:Skip to content=1x1, A:Home=171x36
+390 works small: A:Skip to content=1x1, A:Home=171x36
+390 work small: A:Skip to content=1x1, A:Home=171x36, A:Корҳо=63x20
+390 worknew small: A:Skip to content=1x1, A:Home=171x36
+390 login small: A:Skip to content=1x1, A:Home=171x36
+390 register small: A:Skip to content=1x1, A:Home=171x36
+390 dashboard small: A:Skip to content=1x1, A:Home=171x36
+390 messages small: A:Skip to content=1x1, A:Home=171x36
+390 chat small: A:Skip to content=1x1, A:Home=171x36, A:Ҷамшед Ҳакимов=180x32
+390 orders small: A:Skip to content=1x1, A:Home=171x36, A:maket-v1.svg=122x36, BUTTON:Таҳрир=81x36
+390 notifications small: A:Skip to content=1x1, A:Home=171x36, BUTTON:Хонда шуд=81x36, BUTTON:Хонда шуд=81x36, BUTTON:Хонда шуд=81x36
+390 newproject small: A:Skip to content=1x1, A:Home=171x36
+390 account small: A:Skip to content=1x1, A:Home=171x36
+390 admin small: A:Skip to content=1x1, A:Home=171x36
+414 home small: A:Skip to content=1x1, A:Home=171x36
+414 projects small: A:Skip to content=1x1, A:Home=171x36
+414 project small: A:Skip to content=1x1, A:Home=171x36, A:brief-autosalon.sv=157x36, BUTTON:Шикоят=80x36
+414 freelancers small: A:Skip to content=1x1, A:Home=171x36
+414 profile small: A:Skip to content=1x1, A:Home=171x36
+414 works small: A:Skip to content=1x1, A:Home=171x36
+414 work small: A:Skip to content=1x1, A:Home=171x36, A:Корҳо=63x20
+414 worknew small: A:Skip to content=1x1, A:Home=171x36
+414 login small: A:Skip to content=1x1, A:Home=171x36
+414 register small: A:Skip to content=1x1, A:Home=171x36
+414 dashboard small: A:Skip to content=1x1, A:Home=171x36
+414 messages small: A:Skip to content=1x1, A:Home=171x36
+414 chat small: A:Skip to content=1x1, A:Home=171x36, A:Ҷамшед Ҳакимов=180x32
+414 orders small: A:Skip to content=1x1, A:Home=171x36, A:maket-v1.svg=122x36
+414 notifications small: A:Skip to content=1x1, A:Home=171x36, BUTTON:Хонда шуд=81x36, BUTTON:Хонда шуд=81x36, BUTTON:Хонда шуд=81x36
+414 newproject small: A:Skip to content=1x1, A:Home=171x36
+414 account small: A:Skip to content=1x1, A:Home=171x36
+414 admin small: A:Skip to content=1x1, A:Home=171x36

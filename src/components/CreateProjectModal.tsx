@@ -91,7 +91,7 @@ export default function CreateProjectModal() {
           <fieldset>
             <legend className="label">{t.pf.budgetMode}</legend>
             <div role="radiogroup" className="mb-3 inline-flex rounded-xl bg-slate-100 p-1 dark:bg-slate-800">
-              {(["fixed", "range"] as const).map((m) => <button key={m} type="button" role="radio" aria-checked={mode === m} onClick={() => setMode(m)} className={`min-h-[36px] rounded-lg px-4 text-sm font-semibold transition duration-200 ${mode === m ? "bg-white text-brand-700 shadow dark:bg-slate-700 dark:text-white" : "text-ink-muted"}`}>{t.pf[m]}</button>)}
+              {(["fixed", "range"] as const).map((m) => <button key={m} type="button" role="radio" aria-checked={mode === m} onClick={() => setMode(m)} className={`min-h-[44px] sm:min-h-[36px] rounded-lg px-4 text-sm font-semibold transition duration-200 ${mode === m ? "bg-white text-brand-700 shadow dark:bg-slate-700 dark:text-white" : "text-ink-muted"}`}>{t.pf[m]}</button>)}
             </div>
             {mode === "fixed" ? (
               <div>

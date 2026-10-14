@@ -29,7 +29,7 @@ export default function MilestoneForm({ orderId, milestone }: { orderId: string;
   }
   return (
     <>
-      <button type="button" className={milestone ? "btn-ghost !min-h-[36px] !px-2 text-xs" : "btn-secondary"} onClick={() => setOpen(true)} data-testid={milestone ? "edit-ms" : "add-ms"}>
+      <button type="button" className={milestone ? "btn-ghost !min-h-[44px] sm:!min-h-[36px] !px-2 text-xs" : "btn-secondary"} onClick={() => setOpen(true)} data-testid={milestone ? "edit-ms" : "add-ms"}>
         {milestone ? <Pencil className="h-3.5 w-3.5" aria-hidden /> : <Plus className="h-4 w-4" aria-hidden />}{milestone ? t.common.edit : t.ord.addMilestone}
       </button>
       <Modal open={open} onClose={() => setOpen(false)} title={milestone ? t.common.edit : t.ord.addMilestone}>

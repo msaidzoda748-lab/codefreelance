@@ -27,7 +27,7 @@ export default async function ConversationPage({ params }: { params: { id: strin
         <div className="min-w-0 space-y-3">
           <div className="flex flex-wrap items-center gap-3">
             <Link href="/messages" className="flex h-11 w-11 items-center justify-center rounded-xl hover:bg-slate-100 lg:hidden" aria-label={t.common.back}><ArrowLeft className="h-5 w-5" /></Link>
-            {other && <Link href={`/freelancers/${other.id}`} className="flex items-center gap-2 no-underline"><Avatar name={other.name} src={other.avatarUrl} size="sm" /><span className="font-bold text-ink">{other.name}</span></Link>}
+            {other && <Link href={`/freelancers/${other.id}`} className="flex min-h-[44px] min-w-0 items-center gap-2 no-underline"><Avatar name={other.name} src={other.avatarUrl} size="sm" /><span className="font-bold text-ink">{other.name}</span></Link>}
             {conv.project && <span className="truncate text-sm text-ink-muted">· <Link href={`/projects/${conv.project.id}`}>{fmt(t.chat.about, { title: conv.project.title })}</Link></span>}
             {conv.orderId && <Link href={`/orders/${conv.orderId}`} className="btn-secondary ml-auto !min-h-[40px] no-underline"><Briefcase className="h-4 w-4" aria-hidden />{t.chat.openOrder}</Link>}
           </div>

@@ -22,7 +22,7 @@ export default function ReportButton({ targetType, targetId }: { targetType: "RE
   }
   return (
     <>
-      <button type="button" onClick={() => setOpen(true)} className="inline-flex min-h-[36px] items-center gap-1 rounded-lg px-2 text-xs text-slate-400 hover:bg-rose-50 hover:text-rose-600" aria-label={t.rev.report}><Flag className="h-3.5 w-3.5" aria-hidden />{t.rev.report}</button>
+      <button type="button" onClick={() => setOpen(true)} className="inline-flex min-h-[44px] sm:min-h-[36px] items-center gap-1 rounded-lg px-2 text-xs text-slate-400 hover:bg-rose-50 hover:text-rose-600" aria-label={t.rev.report}><Flag className="h-3.5 w-3.5" aria-hidden />{t.rev.report}</button>
       <Modal open={open} onClose={() => { setOpen(false); setDone(false); }} title={t.rev.report}>
         {done ? <FormMessage kind="success">{t.rev.reported}</FormMessage> : (
           <form onSubmit={submit} className="space-y-4">

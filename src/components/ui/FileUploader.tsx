@@ -46,7 +46,7 @@ export function AttachmentList({ files }: { files: { id: string; name: string; u
     <ul className="flex flex-wrap gap-2">
       {files.map((a) => (
         <li key={a.id}>
-          <a href={a.url} target="_blank" rel="noreferrer" className="inline-flex min-h-[36px] items-center gap-1.5 rounded-xl border border-line bg-slate-50 px-3 text-xs font-medium text-navy-800 no-underline hover:border-brand-300">
+          <a href={a.url} target="_blank" rel="noreferrer" className="inline-flex min-h-[44px] sm:min-h-[36px] items-center gap-1.5 rounded-xl border border-line bg-slate-50 px-3 text-xs font-medium text-navy-800 no-underline hover:border-brand-300">
             <FileText className="h-3.5 w-3.5" aria-hidden />{a.name}
           </a>
         </li>

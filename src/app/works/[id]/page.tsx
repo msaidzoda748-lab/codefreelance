@@ -43,7 +43,7 @@ export default async function WorkPage({ params }: { params: { id: string } }) {
 
   return (
     <div className="mx-auto max-w-6xl space-y-8 animate-slide-up">
-      <Link href="/works" className="inline-flex items-center gap-1 text-sm font-semibold no-underline"><ChevronLeft className="h-4 w-4" aria-hidden />{t.nav.works}</Link>
+      <Link href="/works" className="inline-flex min-h-[44px] items-center gap-1 text-sm font-semibold no-underline"><ChevronLeft className="h-4 w-4" aria-hidden />{t.nav.works}</Link>
       {w.hidden && <p role="status" className="flex items-center gap-2 rounded-2xl bg-rose-50 p-3 text-sm font-semibold text-rose-700"><EyeOff className="h-4 w-4" aria-hidden />{t.works.hiddenNote}</p>}
       <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_340px]">
         <div className="min-w-0 space-y-6">

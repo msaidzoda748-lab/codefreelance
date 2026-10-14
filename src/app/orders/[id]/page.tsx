@@ -124,7 +124,7 @@ export default async function OrderPage({ params }: { params: { id: string } }) 
                 )}
                 {m.events.length > 0 && (
                   <details className="mt-3 text-sm">
-                    <summary className="min-h-[36px] cursor-pointer text-xs font-semibold text-ink-muted">{t.ord.history} ({m.events.length})</summary>
+                    <summary className="min-h-[44px] sm:min-h-[36px] cursor-pointer text-xs font-semibold text-ink-muted">{t.ord.history} ({m.events.length})</summary>
                     <ul className="mt-2 space-y-1 border-l-2 border-line pl-3 text-xs">
                       {m.events.map((e) => <li key={e.id}><span className="text-ink-muted">{fdatetime(e.createdAt, lang)}</span> — <strong>{e.actor.name}</strong>: {ev(e.action)}{e.comment && <> — <em>{e.comment}</em></>}</li>)}
                     </ul>

@@ -13,7 +13,20 @@ body {
 }
 html, body { overflow-x: clip; max-width: 100%; }
 body { font-size: 15px; }
-@media (max-width: 767px) { body { padding-bottom: calc(76px + env(safe-area-inset-bottom)); } }
+@media (max-width: 767px) {
+  body { padding-bottom: calc(76px + env(safe-area-inset-bottom)); }
+  body[data-chat] { padding-bottom: env(safe-area-inset-bottom); }
+  body[data-chat] main#main { padding-top: .75rem; padding-bottom: .5rem; }
+  body[data-chat] footer { display: none; }
+  /* Admin/data tables: stack rows as cards on phones instead of side-scrolling */
+  table.table-clean { min-width: 0 !important; display: block; }
+  table.table-clean thead { display: none; }
+  table.table-clean tbody { display: block; }
+  table.table-clean tbody tr { display: block; padding: .75rem .25rem; }
+  table.table-clean tbody td { display: block; padding: .2rem .75rem !important; word-break: break-word; }
+  table.table-clean tbody td:last-child { padding-top: .5rem !important; }
+  input, select, textarea { font-size: 16px !important; } /* avoid iOS zoom on focus */
+}
 .no-scrollbar::-webkit-scrollbar { display: none; }
 .no-scrollbar { scrollbar-width: none; }
 @media (prefers-reduced-motion: reduce) {

@@ -26,7 +26,7 @@ export default async function AdminPage({ searchParams }: { searchParams: { tab?
   const page = Math.max(1, Number(searchParams.page) || 1);
   const skip = (page - 1) * SIZE;
   const mod = (targetType: string, targetId: string, action: string, label: string, danger = false, extra?: boolean) => (
-    <ActionButton url="/api/admin/moderate" body={{ targetType, targetId, action }} label={label} className={`btn-secondary !min-h-[36px] !px-3 text-xs ${danger ? "!text-rose-600" : ""}`}
+    <ActionButton url="/api/admin/moderate" body={{ targetType, targetId, action }} label={label} className={`btn-secondary !min-h-[44px] sm:!min-h-[36px] !px-3 text-xs ${danger ? "!text-rose-600" : ""}`}
       prompt={{ label: t.adm.reasonPrompt, field: "reason" }} extraCheckbox={extra ? { label: t.adm.hideTarget, field: "hideTarget" } : undefined} testId={`mod-${action}-${targetId}`} />
   );
   let body: React.ReactNode = null; let pages = 1;
@@ -80,7 +80,7 @@ export default async function AdminPage({ searchParams }: { searchParams: { tab?
     const rows = await prisma.category.findMany({ orderBy: [{ sort: "asc" }, { slug: "asc" }], include: { _count: { select: { projects: true } } } });
     body = <div className="space-y-4"><div className="card"><CategoryAdd /></div><table className="table-clean w-full min-w-[640px] text-sm"><thead><tr><th className={th}>{t.adm.slug}</th><th className={th}>TJ / RU / EN</th><th className={th}>{t.adm.projects}</th><th className={th}>{t.common.actions}</th></tr></thead>
       <tbody className="divide-y divide-line">{rows.map((c) => <tr key={c.id} className={c.active ? "" : "opacity-60"}><td className={td}><code>{c.slug}</code></td><td className={td}>{c.nameTj} / {c.nameRu} / {c.nameEn}</td><td className={td}>{c._count.projects}</td>
-        <td className={td}><ActionButton url={`/api/admin/categories/${c.id}`} method="PATCH" body={{ active: !c.active }} label={c.active ? t.adm.disable : t.adm.enable} className="btn-secondary !min-h-[36px] !px-3 text-xs" /></td></tr>)}</tbody></table></div>;
+        <td className={td}><ActionButton url={`/api/admin/categories/${c.id}`} method="PATCH" body={{ active: !c.active }} label={c.active ? t.adm.disable : t.adm.enable} className="btn-secondary !min-h-[44px] sm:!min-h-[36px] !px-3 text-xs" /></td></tr>)}</tbody></table></div>;
   } else {
     const where = q ? { OR: [{ action: { contains: q, mode: ci } }, { reason: { contains: q, mode: ci } }, { targetId: q }] } : {};
     const [rows, total] = await Promise.all([prisma.auditLog.findMany({ where, orderBy: { createdAt: "desc" }, skip, take: SIZE, include: { actor: { select: { name: true } } } }), prisma.auditLog.count({ where })]);
