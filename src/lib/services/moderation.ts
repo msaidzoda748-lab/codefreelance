@@ -2,13 +2,14 @@ import { prisma } from "../prisma";
 import { ApiError } from "../api";
 import { notifyUser } from "../notifications";
 
-export type ModTarget = "USER" | "PROJECT" | "REVIEW" | "MESSAGE" | "REPORT";
+export type ModTarget = "USER" | "PROJECT" | "REVIEW" | "MESSAGE" | "REPORT" | "WORK";
 const ACTIONS: Record<ModTarget, string[]> = {
   USER: ["restrict", "reactivate"],
   PROJECT: ["hide", "unhide"],
   REVIEW: ["hide", "unhide"],
   MESSAGE: ["hide", "unhide"],
   REPORT: ["resolve", "dismiss"],
+  WORK: ["hide", "unhide"],
 };
 
 /** Every moderation action requires a reason and is written to AuditLog. */
@@ -26,6 +27,7 @@ export async function moderate(adminId: string, targetType: ModTarget, targetId:
     }
     case "PROJECT": await prisma.project.update({ where: { id: targetId }, data: { hidden: action === "hide" } }); break;
     case "REVIEW": await prisma.review.update({ where: { id: targetId }, data: { hidden: action === "hide" } }); break;
+    case "WORK": await prisma.portfolioItem.update({ where: { id: targetId }, data: { hidden: action === "hide" } }); break;
     case "MESSAGE": await prisma.message.update({ where: { id: targetId }, data: { hidden: action === "hide" } }); break;
     case "REPORT": {
       const r = await prisma.report.findUnique({ where: { id: targetId } });

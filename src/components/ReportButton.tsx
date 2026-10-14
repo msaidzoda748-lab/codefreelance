@@ -7,7 +7,7 @@ import { api } from "@/lib/client";
 import Modal from "./Modal";
 import { SelectField, TextArea, FormMessage } from "./ui/Field";
 
-export default function ReportButton({ targetType, targetId }: { targetType: "REVIEW" | "PROJECT" | "USER" | "MESSAGE"; targetId: string }) {
+export default function ReportButton({ targetType, targetId }: { targetType: "REVIEW" | "PROJECT" | "USER" | "MESSAGE" | "WORK"; targetId: string }) {
   const { t, user } = useI18n();
   const [open, setOpen] = useState(false);
   const [done, setDone] = useState(false);

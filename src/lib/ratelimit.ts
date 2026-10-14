@@ -12,6 +12,7 @@ export const LIMITS = {
   message: { max: 30, windowMs: 60_000 },
   proposal: { max: 10, windowMs: 60 * 60_000 },
   report: { max: 10, windowMs: 60 * 60_000 },
+  work: { max: 30, windowMs: 60 * 60_000 },
 } as const;
 export type LimitName = keyof typeof LIMITS;
 

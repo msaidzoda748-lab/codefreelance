@@ -111,12 +111,25 @@ model PortfolioItem {
   /// newline-separated image URLs
   images      String            @default("")
   tech        String            @default("")
+  /// live demo / website URL
   link        String?
+  appStoreUrl String?
+  playUrl     String?
+  sourceUrl   String?
+  downloadUrl String?
+  categoryId  String?
+  category    Category?         @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  /// hidden by moderation
+  hidden      Boolean           @default(false)
+  views       Int               @default(0)
   createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @default(now()) @updatedAt
 
   proposals Proposal[] @relation("ProposalPortfolio")
 
   @@index([profileId])
+  @@index([hidden, createdAt])
+  @@index([categoryId])
 }
 
 model Category {
@@ -129,6 +142,7 @@ model Category {
   sort      Int       @default(0)
   createdAt DateTime  @default(now())
   projects  Project[]
+  works     PortfolioItem[]
 }
 
 model Skill {

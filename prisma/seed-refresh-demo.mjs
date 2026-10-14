@@ -3,6 +3,7 @@
 import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
 import { normalize } from "./demo-normalize.mjs";
+import { seedWorks } from "./seed-works.mjs";
 const prisma = new PrismaClient();
 const A = (n) => `/img/avatars/${n}.svg`;
 const C = (n) => `/img/covers/${n}.svg`;
@@ -59,6 +60,7 @@ const demoIds = Object.values(ids);
 const bare = await prisma.project.findMany({ where: { clientId: { in: demoIds }, coverUrl: null } });
 for (const p of bare) await prisma.project.update({ where: { id: p.id }, data: { coverUrl: C(COVER_BY_CAT[p.category] || "website") } });
 await normalize(prisma, { userIds: demoIds });
+await seedWorks(prisma);
 await prisma.user.updateMany({ where: { email: { endsWith: "@demo.tj" } }, data: { isDemo: true } });
 console.log(`[seed-refresh-demo] normalized demo data; created ${created} sample projects, added covers to ${bare.length} demo projects`);
 await prisma.$disconnect();

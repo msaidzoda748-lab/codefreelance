@@ -290,6 +290,85 @@ async function main() {
     assert((await client.page.goto("/admin")).status() === 404, "non-admin sees /admin");
     await admin.ctx.close();
   });
+  await test("works: freelancer publishes a work with links + images via UI", async () => {
+    S.workTitle = `E2E Showcase ${run}`;
+    await go(fl1, "/works/new");
+    const f = fl1.page;
+    await f.fill('[data-testid="work-form"] input[name="title"]', S.workTitle);
+    await f.fill('[data-testid="work-form"] textarea[name="description"]', "A mobile + web app built for the e2e run.");
+    await f.selectOption('[data-testid="work-form"] select[name="categoryId"]', { index: 1 });
+    await f.fill('input[name="tech"]', "Flutter, Firebase");
+    const png = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==", "base64");
+    await f.setInputFiles('[data-testid="work-form"] input[type="file"]', { name: "a.png", mimeType: "image/png", buffer: png });
+    await f.waitForSelector('[data-testid="work-images"] img');
+    await f.setInputFiles('[data-testid="work-form"] input[type="file"]', { name: "b.png", mimeType: "image/png", buffer: png });
+    await f.waitForFunction(() => document.querySelectorAll('[data-testid="work-images"] img').length === 2);
+    await f.fill('input[name="link"]', "http://insecure.example.com");
+    await f.fill('input[name="appStoreUrl"]', "https://evil.example.com/app");
+    await f.click('[data-testid="work-save"]');
+    await f.waitForSelector(".field-error");
+    assert(await f.locator(".field-error").count() >= 2, "expected link field errors");
+    await f.fill('input[name="link"]', "https://showcase.example.com");
+    await f.fill('input[name="appStoreUrl"]', "https://apps.apple.com/app/id123456");
+    await f.fill('input[name="playUrl"]', "https://play.google.com/store/apps/details?id=tj.e2e");
+    await f.fill('input[name="sourceUrl"]', "https://github.com/e2e/showcase");
+    await f.fill('input[name="downloadUrl"]', "https://downloads.example.com/app.apk");
+    await Promise.all([f.waitForURL(/\/works\/c[a-z0-9]+$/, { timeout: 20000 }), f.click('[data-testid="work-save"]')]);
+    S.work = new URL(f.url()).pathname.split("/").pop();
+    assert(await f.locator('[data-testid="work-links"] a').count() === 5, "5 link buttons");
+    assert(await f.locator('[data-testid="work-edit"]').count() === 1, "owner sees edit");
+    const bad = await apiJson(fl1, "POST", "/api/portfolio", { title: "Bad links", link: "javascript:alert(1)", playUrl: "https://example.com" });
+    assert(bad.status === 400 && bad.body.fields?.link === "https" && bad.body.fields?.playUrl === "host", `bad links → ${bad.status} ${JSON.stringify(bad.body)}`);
+  });
+  await test("works: public gallery, filters and detail page", async () => {
+    await go(anon, `/works?q=${encodeURIComponent(S.workTitle)}`);
+    await anon.page.waitForSelector('[data-testid="work-card"]');
+    assert(await anon.page.locator('[data-testid="work-card"]').count() === 1, "search finds the work");
+    await go(anon, `/works?tech=Flutter&sort=popular`);
+    await anon.page.waitForSelector('[data-testid="work-card"]');
+    await go(anon, `/works/${S.work}`);
+    assert((await anon.page.textContent('[data-testid="work-title"]')).includes(S.workTitle), "title");
+    for (const a of await anon.page.locator('[data-testid="work-links"] a').all()) {
+      assert(await a.getAttribute("target") === "_blank", "target _blank");
+      const rel = (await a.getAttribute("rel")) || "";
+      assert(["noopener", "noreferrer", "nofollow"].every((x) => rel.includes(x)), `rel=${rel}`);
+    }
+    assert(await anon.page.locator('[data-testid="work-gallery"] img').count() >= 3, "gallery main + thumbs");
+    assert(await anon.page.locator('[data-testid="work-edit"]').count() === 0, "anon has no edit");
+    await anon.page.waitForSelector('[data-testid="work-author"] >> text=E2E Freelancer One');
+    const fid = (await apiJson(fl1, "GET", "/api/account")).body.user.id;
+    await go(anon, `/freelancers/${fid}`);
+    await anon.page.waitForSelector(`[data-testid="profile-works"] >> text=${S.workTitle}`);
+  });
+  await test("works: only the author can edit or delete", async () => {
+    const id = S.work;
+    assert((await apiJson(fl2, "PATCH", `/api/portfolio/${id}`, { title: "Hijacked" })).status === 403, "other freelancer PATCH");
+    assert((await apiJson(fl2, "DELETE", `/api/portfolio/${id}`)).status === 403, "other freelancer DELETE");
+    assert((await apiJson(client, "POST", "/api/portfolio", { title: "Client work" })).status === 403, "client cannot create");
+    assert((await apiJson(anon, "PATCH", `/api/portfolio/${id}`, { title: "x" })).status === 401, "anon PATCH");
+    assert((await fl2.page.goto(`/works/${id}/edit`)).status() === 404, "non-owner edit page 404");
+    await go(anon, `/works/${id}/edit`); assert(anon.page.url().includes("/login"), "anon → login");
+    await go(fl1, `/works/${id}/edit`);
+    await fl1.page.fill('input[name="title"]', S.workTitle + " v2");
+    await Promise.all([fl1.page.waitForURL(new RegExp(`/works/${id}$`)), fl1.page.click('[data-testid="work-save"]')]);
+    await fl1.page.waitForSelector(`[data-testid="work-title"] >> text=v2`);
+    assert(await fl1.page.locator('[data-testid="work-links"] a').count() === 5, "links kept after edit");
+  });
+  await test("works: report + admin hide/unhide (audit)", async () => {
+    const id = S.work;
+    assert((await apiJson(client, "POST", "/api/reports", { targetType: "WORK", targetId: id, reason: "spam" })).status === 201, "report work");
+    const admin = await actor("admin2"); await loginAPI(admin, "admin@demo.tj");
+    assert((await apiJson(admin, "POST", "/api/admin/moderate", { targetType: "WORK", targetId: id, action: "hide", reason: "e2e hide work" })).status === 200, "hide");
+    assert((await anon.page.goto(`/works/${id}`)).status() === 404, "hidden work 404 for public");
+    assert((await fl1.page.goto(`/works/${id}`)).status() === 200, "owner still sees hidden work");
+    await go(anon, `/works?q=${encodeURIComponent(S.workTitle)}`);
+    assert(await anon.page.locator('[data-testid="work-card"]').count() === 0, "hidden not listed");
+    await go(admin, "/admin?tab=works"); await admin.page.waitForSelector('[data-testid="admin-works"]');
+    await go(admin, "/admin?tab=audit"); await admin.page.waitForSelector("text=e2e hide work");
+    await apiJson(admin, "POST", "/api/admin/moderate", { targetType: "WORK", targetId: id, action: "unhide", reason: "e2e unhide" });
+    assert((await anon.page.goto(`/works/${id}`)).status() === 200, "unhidden");
+    await admin.ctx.close();
+  });
   await test("rate limit: login is throttled", async () => {
     const a = await actor("rl");
     let last = 0;
@@ -309,7 +388,7 @@ async function main() {
     for (const w of [360, 390, 768, 1440]) {
       const a = await actor(`w${w}`, { width: w, height: 800 });
       await loginAPI(a, em("client"));
-      for (const path of ["/", "/projects", `/projects/${S.project}`, `/orders/${S.order}`, `/messages/${S.conv}`, "/dashboard", "/freelancers"]) {
+      for (const path of ["/", "/projects", `/projects/${S.project}`, `/orders/${S.order}`, `/messages/${S.conv}`, "/dashboard", "/freelancers", "/works", `/works/${S.work}`, "/works/new"]) {
         await go(a, path);
         const over = await a.page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
         assert(over <= 1, `${w}px ${path} overflows by ${over}px`);

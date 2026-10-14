@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { ApiError, handle, ok, readJson, requireUser } from "@/lib/api";
-import { parsePortfolio } from "@/lib/portfolio";
+import { workData } from "@/lib/worksServer";
 
 type Ctx = { params: { id: string } };
 async function mine(id: string, profileId?: string) {
@@ -12,7 +12,7 @@ async function mine(id: string, profileId?: string) {
 export const PATCH = handle(async (req: Request, { params }: Ctx) => {
   const user = await requireUser();
   await mine(params.id, user.profile?.id);
-  await prisma.portfolioItem.update({ where: { id: params.id }, data: parsePortfolio(await readJson(req)) });
+  await prisma.portfolioItem.update({ where: { id: params.id }, data: await workData(await readJson(req)) });
   return ok();
 });
 export const DELETE = handle(async (_req: Request, { params }: Ctx) => {

@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Briefcase, CheckCircle2, ExternalLink, Languages, MapPin, Star } from "lucide-react";
+import { Briefcase, CheckCircle2, Languages, MapPin, Star } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { avgRating, getCurrentUser } from "@/lib/auth";
 import { parseSkills } from "@/lib/utils";
@@ -11,6 +11,8 @@ import Avatar from "@/components/Avatar";
 import ProfileActions from "@/components/ProfileActions";
 import ReportButton from "@/components/ReportButton";
 import { EmptyState } from "@/components/ui/States";
+import WorkCard from "@/components/works/WorkCard";
+import { catName } from "@/lib/queries/projects";
 
 export const dynamic = "force-dynamic";
 export async function generateMetadata({ params }: { params: { id: string } }) {
@@ -25,7 +27,7 @@ export default async function ProfilePage({ params }: { params: { id: string } }
   const user = await prisma.user.findUnique({
     where: { id: params.id },
     include: {
-      profile: { include: { skillsRel: true, portfolioItems: { orderBy: { createdAt: "desc" } } } },
+      profile: { include: { skillsRel: true, portfolioItems: { where: { hidden: false }, orderBy: { createdAt: "desc" }, include: { category: true } } } },
       clientProfile: true,
       reviewsRecv: { where: { hidden: false }, include: { fromUser: { select: { name: true, avatarUrl: true } }, project: { select: { title: true } } }, orderBy: { createdAt: "desc" }, take: 20 },
       _count: { select: { freelancerOrders: { where: { status: "COMPLETED" } }, clientOrders: { where: { status: "COMPLETED" } } } },
@@ -79,16 +81,10 @@ export default async function ProfilePage({ params }: { params: { id: string } }
 
       {p && (
         <section aria-labelledby="pf-h">
-          <h2 id="pf-h" className="mb-3 text-lg font-bold text-ink">{t.prof.portfolio}</h2>
+          <div className="mb-3 flex items-center justify-between gap-2"><h2 id="pf-h" className="text-lg font-bold text-ink">{t.nav.works}</h2>{me?.id === user.id && <Link href="/works/new" className="btn-secondary no-underline">{t.works.add}</Link>}</div>
           {p.portfolioItems.length ? (
-            <div className="grid gap-4 sm:grid-cols-2">
-              {p.portfolioItems.map((i) => { const img = i.images.split("\n").filter(Boolean)[0]; return (
-                <article key={i.id} className="card overflow-hidden !p-0">
-                  {img && /* eslint-disable-next-line @next/next/no-img-element */ <img src={img} alt="" className="h-40 w-full object-cover" />}
-                  <div className="p-4"><h3 className="font-bold text-ink">{i.title}</h3>{i.description && <p className="mt-1 line-clamp-3 text-sm text-ink-muted">{i.description}</p>}
-                    {i.tech && <p className="mt-2 text-xs text-ink-muted">{i.tech}</p>}
-                    {i.link && <a href={i.link} target="_blank" rel="noreferrer nofollow" className="mt-2 inline-flex min-h-[36px] items-center gap-1 text-sm"><ExternalLink className="h-3.5 w-3.5" aria-hidden />{i.link.replace(/^https?:\/\//, "").slice(0, 40)}</a>}</div>
-                </article>); })}
+            <div className="grid gap-4 sm:grid-cols-2" data-testid="profile-works">
+              {p.portfolioItems.map((i) => <WorkCard key={i.id} t={t} w={{ ...i, category: i.category ? catName(i.category, lang) : undefined }} />)}
             </div>
           ) : <EmptyState icon={Briefcase} title={t.prof.emptyPortfolio} />}
         </section>

@@ -3,7 +3,7 @@ import { notFound, redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
 import { getDict, getLang } from "@/i18n/server";
-import { fdatetime } from "@/i18n/format";
+import { fdate, fdatetime } from "@/i18n/format";
 import StatusBadge from "@/components/StatusBadge";
 import ActionButton from "@/components/ui/ActionButton";
 import Pagination from "@/components/ui/Pagination";
@@ -11,7 +11,7 @@ import CategoryAdd from "@/components/admin/CategoryAdd";
 
 export const dynamic = "force-dynamic";
 export async function generateMetadata() { return { title: getDict().adm.title }; }
-const TABS = ["stats", "users", "projects", "reviews", "reports", "categories", "audit"] as const;
+const TABS = ["stats", "users", "projects", "reviews", "works", "reports", "categories", "audit"] as const;
 type Tab = (typeof TABS)[number];
 const SIZE = 20;
 const ci = "insensitive" as const;
@@ -61,11 +61,18 @@ export default async function AdminPage({ searchParams }: { searchParams: { tab?
     body = <table className="table-clean w-full min-w-[720px] text-sm"><thead><tr><th className={th}>{t.rev.comment}</th><th className={th}>{t.rev.rating}</th><th className={th}>{t.common.actions}</th></tr></thead>
       <tbody className="divide-y divide-line">{rows.map((r) => <tr key={r.id}><td className={td}><div className="text-xs text-ink-muted">{r.fromUser.name} → {r.toUser.name}</div>{r.comment}{r.hidden && <span className="ml-2 rounded bg-rose-50 px-1.5 text-[10px] font-bold text-rose-700">{t.adm.hidden}</span>}</td><td className={td}>{r.rating}★</td>
         <td className={td}>{r.hidden ? mod("REVIEW", r.id, "unhide", t.adm.unhide) : mod("REVIEW", r.id, "hide", t.adm.hide, true)}</td></tr>)}</tbody></table>;
+  } else if (tab === "works") {
+    const where = q ? { OR: [{ title: { contains: q, mode: ci } }, { tech: { contains: q, mode: ci } }] } : {};
+    const [rows, total] = await Promise.all([prisma.portfolioItem.findMany({ where, orderBy: { createdAt: "desc" }, skip, take: SIZE, include: { profile: { select: { user: { select: { id: true, name: true } } } } } }), prisma.portfolioItem.count({ where })]);
+    pages = Math.ceil(total / SIZE);
+    body = <table className="table-clean w-full min-w-[720px] text-sm" data-testid="admin-works"><thead><tr><th>{t.works.name}</th><th>{t.works.author}</th><th>{t.common.date}</th><th>{t.common.actions}</th></tr></thead>
+      <tbody className="divide-y divide-line">{rows.map((w) => <tr key={w.id}><td className={td}><Link href={`/works/${w.id}`}>{w.title}</Link>{w.hidden && <span className="ml-2 rounded bg-rose-50 px-1.5 text-[10px] font-bold text-rose-700">{t.adm.hidden}</span>}<div className="text-xs text-ink-muted">{w.tech}</div></td><td className={td}><Link href={`/freelancers/${w.profile.user.id}`}>{w.profile.user.name}</Link></td><td className={td}>{fdate(w.createdAt, lang)}</td>
+        <td className={td}>{w.hidden ? mod("WORK", w.id, "unhide", t.adm.unhide) : mod("WORK", w.id, "hide", t.adm.hide, true)}</td></tr>)}</tbody></table>;
   } else if (tab === "reports") {
     const where = { ...(q ? { OR: [{ reason: { contains: q, mode: ci } }, { details: { contains: q, mode: ci } }] } : {}) };
     const [rows, total] = await Promise.all([prisma.report.findMany({ where, orderBy: [{ status: "desc" }, { createdAt: "desc" }], skip, take: SIZE, include: { reporter: { select: { name: true } } } }), prisma.report.count({ where })]);
     pages = Math.ceil(total / SIZE);
-    const link = (r: { targetType: string; targetId: string }) => r.targetType === "PROJECT" ? `/projects/${r.targetId}` : r.targetType === "USER" ? `/freelancers/${r.targetId}` : null;
+    const link = (r: { targetType: string; targetId: string }) => r.targetType === "PROJECT" ? `/projects/${r.targetId}` : r.targetType === "USER" ? `/freelancers/${r.targetId}` : r.targetType === "WORK" ? `/works/${r.targetId}` : null;
     body = <table className="table-clean w-full min-w-[760px] text-sm"><thead><tr><th className={th}>{t.adm.target}</th><th className={th}>{t.common.reason}</th><th className={th}>{t.common.status}</th><th className={th}>{t.common.actions}</th></tr></thead>
       <tbody className="divide-y divide-line">{rows.map((r) => { const l = link(r); return <tr key={r.id}><td className={td}>{r.targetType} {l ? <Link href={l}>{r.targetId.slice(-6)}</Link> : <code className="text-xs">{r.targetId.slice(-6)}</code>}<div className="text-xs text-ink-muted">{r.reporter.name} · {fdatetime(r.createdAt, lang)}</div></td><td className={td}>{(t.rev as Record<string, string>)[`r_${r.reason}`] ?? r.reason}{r.details && <div className="text-xs text-ink-muted">{r.details}</div>}{r.resolution && <div className="text-xs text-brand-700">→ {r.resolution}</div>}</td><td className={td}><StatusBadge status={r.status} /></td>
         <td className={td}>{r.status === "OPEN" && <div className="flex flex-wrap gap-1">{mod("REPORT", r.id, "resolve", t.adm.resolve, false, r.targetType !== "USER")}{mod("REPORT", r.id, "dismiss", t.adm.dismiss)}</div>}</td></tr>; })}</tbody></table>;

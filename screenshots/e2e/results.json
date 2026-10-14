@@ -1,126 +1,146 @@
 {
   "base": "http://localhost:3000",
-  "run": "mv7hp24e",
+  "run": "mv7i3u8l",
   "results": [
     {
       "name": "register client via UI",
       "ok": true,
-      "ms": 2025
+      "ms": 3375
     },
     {
       "name": "register 3 freelancers + stranger",
       "ok": true,
-      "ms": 2725
+      "ms": 2207
     },
     {
       "name": "validation: project form shows field errors (frontend)",
       "ok": true,
-      "ms": 1906
+      "ms": 2055
     },
     {
       "name": "backend validation rejects bad project",
       "ok": true,
-      "ms": 386
+      "ms": 228
     },
     {
       "name": "client saves a draft, then publishes via UI",
       "ok": true,
-      "ms": 4278
+      "ms": 4110
     },
     {
       "name": "freelancer 1 sends a proposal via UI modal",
       "ok": true,
-      "ms": 1392
+      "ms": 1331
     },
     {
       "name": "freelancers 2 and 3 propose (API); duplicate proposal rejected",
       "ok": true,
-      "ms": 756
+      "ms": 513
     },
     {
       "name": "freelancer edits then withdraws and re-sends own proposal",
       "ok": true,
-      "ms": 2666
+      "ms": 2106
     },
     {
       "name": "privacy: proposal contents visible only to project owner",
       "ok": true,
-      "ms": 1634
+      "ms": 1487
     },
     {
       "name": "compare 3 proposals and hire from the compare page",
       "ok": true,
-      "ms": 5707
+      "ms": 6228
     },
     {
       "name": "double hire does not create a second order",
       "ok": true,
-      "ms": 941
+      "ms": 651
     },
     {
       "name": "hired freelancer sees order; others get 404 on order page",
       "ok": true,
-      "ms": 3354
+      "ms": 2785
     },
     {
       "name": "no review before completion",
       "ok": true,
-      "ms": 602
+      "ms": 507
     },
     {
       "name": "freelancer cannot complete/accept own work",
       "ok": true,
-      "ms": 1328
+      "ms": 1192
     },
     {
       "name": "freelancer starts order; client adds a milestone",
       "ok": true,
-      "ms": 3478
+      "ms": 3292
     },
     {
       "name": "chat: messages, attachment privacy, retry dedupe",
       "ok": true,
-      "ms": 7367
+      "ms": 6551
     },
     {
       "name": "submit work → revision → resubmit → accept all → COMPLETED",
       "ok": true,
-      "ms": 10050
+      "ms": 9758
     },
     {
       "name": "both parties leave one review each; duplicates and self-review rejected",
       "ok": true,
-      "ms": 3963
+      "ms": 3883
     },
     {
       "name": "search, filters, sort and pagination",
       "ok": true,
-      "ms": 1691
+      "ms": 1807
     },
     {
       "name": "notifications: badge + center",
       "ok": true,
-      "ms": 1135
+      "ms": 1076
     },
     {
       "name": "admin: restricted user cannot log in; audit log written",
       "ok": true,
-      "ms": 3319
+      "ms": 2997
+    },
+    {
+      "name": "works: freelancer publishes a work with links + images via UI",
+      "ok": true,
+      "ms": 4644
+    },
+    {
+      "name": "works: public gallery, filters and detail page",
+      "ok": true,
+      "ms": 3363
+    },
+    {
+      "name": "works: only the author can edit or delete",
+      "ok": true,
+      "ms": 4464
+    },
+    {
+      "name": "works: report + admin hide/unhide (audit)",
+      "ok": true,
+      "ms": 3700
     },
     {
       "name": "rate limit: login is throttled",
       "ok": true,
-      "ms": 254
+      "ms": 285
     },
     {
       "name": "password reset: token flow (dev log fallback) ",
       "ok": true,
-      "ms": 1134
+      "ms": 1157
     },
     {
       "name": "responsive: no horizontal overflow at 360/390/768/1440",
       "ok": true,
-      "ms": 18678
+      "ms": 26848
     },
     {
       "name": "no console errors during the run",

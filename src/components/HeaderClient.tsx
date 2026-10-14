@@ -19,6 +19,7 @@ export default function HeaderClient() {
   const links = [
     { href: "/projects", label: t.nav.projects },
     { href: "/freelancers", label: t.nav.freelancers },
+    { href: "/works", label: t.nav.works },
     ...(user ? [{ href: "/dashboard", label: t.nav.dashboard }, { href: "/messages", label: t.nav.messages }] : [{ href: "/#how", label: t.nav.how }]),
     ...(user?.isAdmin ? [{ href: "/admin", label: t.nav.admin }] : []),
   ];

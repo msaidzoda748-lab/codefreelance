@@ -1,6 +1,7 @@
 import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
 import { normalize } from "./demo-normalize.mjs";
+import { seedWorks } from "./seed-works.mjs";
 
 const prisma = new PrismaClient();
 const day = 86400000;
@@ -99,6 +100,7 @@ async function main() {
   await prisma.message.create({ data: { projectId: prog.id, senderId: client1.id, body: "Олӣ! Графики фурӯшро калонтар кунед, лутфан.", createdAt: ago(0, 5) } });
 
   await normalize(prisma);
+  await seedWorks(prisma);
   await extras({ client1, client2, F, P, prog, prop });
   console.log("Seed OK. Password for all demo users: password123");
 }
