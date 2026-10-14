@@ -14,7 +14,7 @@ export const POST = handle(async (req: Request) => {
     const token = randomBytes(32).toString("hex");
     await prisma.passwordResetToken.create({ data: { userId: user.id, tokenHash: createHash("sha256").update(token).digest("hex"), expiresAt: new Date(Date.now() + 60 * 60_000) } });
     const link = `${appUrl()}/reset-password?token=${token}`;
-    await sendMail(user.email, "Zoir Freelance — password reset", `Барқарор кардани рамз / Сброс пароля / Reset password:\n${link}\n\n(1 hour)`).catch((e) => console.error("[mail] failed", e));
+    await sendMail(user.email, "CodeFreelance — password reset", `Барқарор кардани рамз / Сброс пароля / Reset password:\n${link}\n\n(1 hour)`).catch((e) => console.error("[mail] failed", e));
   }
   // Same response whether or not the account exists. `emailConfigured` tells the UI honestly if mail can be delivered at all.
   return ok({ emailConfigured: mailProvider() !== "log" });

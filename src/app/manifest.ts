@@ -2,8 +2,8 @@ import type { MetadataRoute } from "next";
 export default function manifest(): MetadataRoute.Manifest {
   return {
     id: "/",
-    name: "Zoir Freelance",
-    short_name: "Zoir",
+    name: "CodeFreelance",
+    short_name: "CodeFreelance",
     description: "Платформаи фрилансерон ва фармоишгарон дар Тоҷикистон",
     start_url: "/",
     scope: "/",

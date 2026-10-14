@@ -18,7 +18,7 @@ const noto = Noto_Sans({ subsets: ["latin", "cyrillic", "cyrillic-ext"], weight:
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = getDict();
-  return { title: { default: `${SITE.name} — ${t.meta.title}`, template: `%s | ${SITE.name}` }, description: `${SITE.name} — ${t.meta.description}`, applicationName: "Zoir Freelance", manifest: "/manifest.webmanifest", appleWebApp: { capable: true, title: "Zoir", statusBarStyle: "default" }, icons: { apple: [{ url: "/apple-touch-icon.png", sizes: "180x180" }] }, other: { "mobile-web-app-capable": "yes" } };
+  return { title: { default: `${SITE.name} — ${t.meta.title}`, template: `%s | ${SITE.name}` }, description: `${SITE.name} — ${t.meta.description}`, applicationName: "CodeFreelance", manifest: "/manifest.webmanifest", appleWebApp: { capable: true, title: "CodeFreelance", statusBarStyle: "default" }, icons: { apple: [{ url: "/apple-touch-icon.png", sizes: "180x180" }] }, other: { "mobile-web-app-capable": "yes" } };
 }
 export const viewport: Viewport = { width: "device-width", initialScale: 1, viewportFit: "cover", themeColor: "#059669" };
 

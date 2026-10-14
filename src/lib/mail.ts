@@ -13,7 +13,7 @@ export function mailProvider(): MailResult["provider"] {
 
 export async function sendMail(to: string, subject: string, text: string, html?: string): Promise<MailResult> {
   const provider = mailProvider();
-  const from = process.env.MAIL_FROM || "Zoir Freelance <no-reply@example.com>";
+  const from = process.env.MAIL_FROM || "CodeFreelance <no-reply@example.com>";
   if (provider === "smtp") {
     const nodemailer = (await import("nodemailer")).default;
     const t = nodemailer.createTransport({

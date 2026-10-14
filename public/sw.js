@@ -1,5 +1,5 @@
-/* Zoir Freelance service worker: offline shell only. Never caches API, auth or HTML responses with user data. */
-const VERSION = "zoir-v1";
+/* CodeFreelance service worker: offline shell only. Never caches API, auth or HTML responses with user data. */
+const VERSION = "codefreelance-v2";
 const SHELL = "/offline.html";
 const PRECACHE = [SHELL, "/icons/icon-192.png", "/icons/icon-512.png", "/manifest.webmanifest"];
 self.addEventListener("install", (e) => { e.waitUntil(caches.open(VERSION).then((c) => c.addAll(PRECACHE)).then(() => self.skipWaiting())); });
