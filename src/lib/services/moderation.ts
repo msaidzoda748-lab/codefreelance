@@ -4,7 +4,7 @@ import { notifyUser } from "../notifications";
 
 export type ModTarget = "USER" | "PROJECT" | "REVIEW" | "MESSAGE" | "REPORT" | "WORK";
 const ACTIONS: Record<ModTarget, string[]> = {
-  USER: ["restrict", "reactivate"],
+  USER: ["restrict", "reactivate", "makeAdmin", "removeAdmin"],
   PROJECT: ["hide", "unhide"],
   REVIEW: ["hide", "unhide"],
   MESSAGE: ["hide", "unhide"],
@@ -21,6 +21,7 @@ export async function moderate(adminId: string, targetType: ModTarget, targetId:
       if (targetId === adminId) throw new ApiError("self_action");
       const u = await prisma.user.findUnique({ where: { id: targetId } });
       if (!u) throw new ApiError("not_found", 404);
+      if (action === "makeAdmin" || action === "removeAdmin") { await prisma.user.update({ where: { id: targetId }, data: { isAdmin: action === "makeAdmin" } }); break; }
       await prisma.user.update({ where: { id: targetId }, data: action === "restrict" ? { status: "RESTRICTED", restrictedReason: reason } : { status: "ACTIVE", restrictedReason: null } });
       if (action === "restrict") await prisma.session.deleteMany({ where: { userId: targetId } });
       break;
