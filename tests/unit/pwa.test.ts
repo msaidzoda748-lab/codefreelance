@@ -4,7 +4,7 @@ import { isIosSafari, dismissedRecently, shouldRegisterSW } from "@/lib/pwa";
 describe("pwa", () => {
   it("manifest is installable", () => {
     const m = manifest();
-    expect(m).toMatchObject({ name: "Zoir Freelance", short_name: "Zoir", display: "standalone", start_url: "/", theme_color: "#059669", background_color: "#F8FAF9" });
+    expect(m).toMatchObject({ name: "CodeFreelance", short_name: "CodeFreelance", display: "standalone", start_url: "/", theme_color: "#059669", background_color: "#F8FAF9" });
     const sizes = (m.icons || []).map((i) => i.sizes);
     expect(sizes).toContain("192x192"); expect(sizes).toContain("512x512");
   });

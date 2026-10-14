@@ -1,3 +1,4 @@
+import { optImg } from "@/lib/img";
 import Link from "next/link";
 import { Eye, ImageIcon } from "lucide-react";
 import type { Dict } from "@/i18n/tj";
@@ -13,7 +14,7 @@ export default function WorkCard({ w, t }: { w: WorkCardData; t: Dict }) {
   return (
     <article className="group card card-hover relative flex flex-col overflow-hidden !p-0" data-testid="work-card">
       <div className="relative aspect-[16/10] overflow-hidden bg-brand-mesh">
-        {cover ? /* eslint-disable-next-line @next/next/no-img-element */ <img src={cover} alt="" loading="lazy" className="h-full w-full object-cover transition duration-300 group-hover:scale-[1.03] motion-reduce:group-hover:scale-100" />
+        {cover ? /* eslint-disable-next-line @next/next/no-img-element */ <img src={optImg(cover, 640)} alt="" loading="lazy" decoding="async" className="h-full w-full object-cover transition duration-300 group-hover:scale-[1.03] motion-reduce:group-hover:scale-100" />
           : <div className="flex h-full items-center justify-center text-brand-400"><ImageIcon className="h-10 w-10" aria-hidden /></div>}
         {w.category && <span className="absolute left-3 top-3 rounded-full bg-white/90 px-2.5 py-1 text-[11px] font-semibold text-brand-700 shadow-sm backdrop-blur dark:bg-slate-900/80">{w.category}</span>}
       </div>

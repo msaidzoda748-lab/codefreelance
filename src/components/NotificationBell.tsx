@@ -24,8 +24,10 @@ export default function NotificationBell() {
     load();
     const es = new EventSource("/api/notifications/stream");
     es.onmessage = (ev) => { try { const d = JSON.parse(ev.data); if (d.type !== "connected") load(); } catch { /* ignore */ } };
-    const iv = setInterval(load, 60000);
-    return () => { es.close(); clearInterval(iv); };
+    const iv = setInterval(() => { if (document.visibilityState === "visible") load(); }, 60000);
+    const onVis = () => { if (document.visibilityState === "visible") load(); };
+    document.addEventListener("visibilitychange", onVis);
+    return () => { es.close(); clearInterval(iv); document.removeEventListener("visibilitychange", onVis); };
   }, [load]);
   useEffect(() => {
     const onDoc = (e: MouseEvent) => { if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false); };

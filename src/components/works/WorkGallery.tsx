@@ -1,4 +1,5 @@
 "use client";
+import { optImg } from "@/lib/img";
 import { useState } from "react";
 
 /** Main image + thumbnails; keyboard accessible. */
@@ -9,7 +10,7 @@ export default function WorkGallery({ images, title, label }: { images: string[]
     <section aria-label={label} className="space-y-3" data-testid="work-gallery">
       <div className="overflow-hidden rounded-card bg-slate-100 shadow-card ring-1 ring-line dark:bg-slate-900 dark:ring-slate-800">
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img key={images[i]} src={images[i]} alt={`${title} — ${i + 1}/${images.length}`} className="aspect-[16/10] w-full animate-fade-in object-cover" />
+        <img key={images[i]} src={optImg(images[i], 1400)} decoding="async" alt={`${title} — ${i + 1}/${images.length}`} className="aspect-[16/10] w-full animate-fade-in object-cover" />
       </div>
       {images.length > 1 && (
         <ul className="flex gap-2 overflow-x-auto pb-1">
@@ -18,7 +19,7 @@ export default function WorkGallery({ images, title, label }: { images: string[]
               <button type="button" onClick={() => setI(k)} aria-label={`${k + 1}/${images.length}`} aria-pressed={k === i}
                 className={`block overflow-hidden rounded-xl transition duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-400 ${k === i ? "ring-2 ring-brand-500" : "opacity-70 ring-1 ring-line hover:opacity-100"}`}>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={src} alt="" className="h-16 w-24 object-cover sm:h-20 sm:w-32" />
+                <img src={optImg(src, 256)} alt="" loading="lazy" decoding="async" className="h-16 w-24 object-cover sm:h-20 sm:w-32" />
               </button>
             </li>
           ))}

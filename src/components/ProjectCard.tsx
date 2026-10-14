@@ -1,4 +1,5 @@
 "use client";
+import { optImg } from "@/lib/img";
 import { useState } from "react";
 import Link from "next/link";
 import { Bookmark, Clock, MapPin, Send } from "lucide-react";
@@ -25,7 +26,7 @@ export default function ProjectCard({ p, showStatus = false }: { p: ProjectCardD
     <article className="group flex flex-col overflow-hidden rounded-card border border-line bg-white shadow-card transition duration-200 hover:-translate-y-1 hover:border-brand-200 hover:shadow-lift sm:flex-row dark:hover:border-brand-800 dark:border-slate-800 dark:bg-slate-900">
       <Link href={`/projects/${p.id}`} className="relative block h-32 shrink-0 overflow-hidden bg-slate-100 sm:h-auto sm:w-[200px] lg:w-[220px]" tabIndex={-1} aria-hidden>
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={p.coverUrl || "/img/covers/website.svg"} alt="" className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.05]" />
+        <img src={optImg(p.coverUrl, 640) || "/img/covers/website.svg"} alt="" loading="lazy" decoding="async" className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.05]" />
         <span className="absolute inset-0 bg-gradient-to-t from-slate-900/25 via-transparent to-transparent opacity-0 transition duration-300 group-hover:opacity-100" />
         {showStatus && <span className="absolute left-3 top-3"><StatusBadge status={p.status} /></span>}
       </Link>
