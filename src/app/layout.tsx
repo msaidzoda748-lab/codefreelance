@@ -7,6 +7,7 @@ import Footer from "@/components/Footer";
 import BottomNavigation from "@/components/BottomNavigation";
 import Toaster from "@/components/ui/Toast";
 import CreateProjectModal from "@/components/CreateProjectModal";
+import InstallPrompt from "@/components/InstallPrompt";
 import { I18nProvider, type SessionUser } from "@/i18n/I18nProvider";
 import { getLang } from "@/i18n/server";
 import { getCurrentUser } from "@/lib/auth";
@@ -17,7 +18,7 @@ const noto = Noto_Sans({ subsets: ["latin", "cyrillic", "cyrillic-ext"], weight:
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = getDict();
-  return { title: { default: `${SITE.name} — ${t.meta.title}`, template: `%s | ${SITE.name}` }, description: `${SITE.name} — ${t.meta.description}` };
+  return { title: { default: `${SITE.name} — ${t.meta.title}`, template: `%s | ${SITE.name}` }, description: `${SITE.name} — ${t.meta.description}`, applicationName: "Zoir Freelance", manifest: "/manifest.webmanifest", appleWebApp: { capable: true, title: "Zoir", statusBarStyle: "default" }, icons: { apple: [{ url: "/apple-touch-icon.png", sizes: "180x180" }] }, other: { "mobile-web-app-capable": "yes" } };
 }
 export const viewport: Viewport = { width: "device-width", initialScale: 1, viewportFit: "cover", themeColor: "#059669" };
 
@@ -37,6 +38,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           <BottomNavigation />
           <Toaster />
           <CreateProjectModal />
+          <InstallPrompt />
         </I18nProvider>
       </body>
     </html>
