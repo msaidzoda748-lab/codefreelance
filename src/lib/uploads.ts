@@ -36,7 +36,9 @@ export type SavedFile = {
 };
 
 function provider(): "local" | "cloudinary" | "s3" {
-  const p = (process.env.STORAGE_PROVIDER || "local").toLowerCase();
+  const p = (
+    process.env.STORAGE_PROVIDER || (process.env.CLOUDINARY_URL ? "cloudinary" : "local")
+  ).toLowerCase();
   if (p === "cloudinary" || p === "s3") return p;
   return "local";
 }
@@ -70,9 +72,20 @@ async function saveCloudinary(
   filename: string,
   mime: string
 ): Promise<string> {
-  const cloud = process.env.CLOUDINARY_CLOUD_NAME;
-  const key = process.env.CLOUDINARY_API_KEY;
-  const secret = process.env.CLOUDINARY_API_SECRET;
+  let cloud = process.env.CLOUDINARY_CLOUD_NAME;
+  let key = process.env.CLOUDINARY_API_KEY;
+  let secret = process.env.CLOUDINARY_API_SECRET;
+  const cu = process.env.CLOUDINARY_URL;
+  if ((!cloud || !key || !secret) && cu) {
+    try {
+      const u = new URL(cu.trim());
+      key = key || decodeURIComponent(u.username);
+      secret = secret || decodeURIComponent(u.password);
+      cloud = cloud || u.hostname;
+    } catch {
+      /* ignore malformed */
+    }
+  }
   if (!cloud || !key || !secret) {
     throw new Error("Cloudinary env vars incomplete");
   }
